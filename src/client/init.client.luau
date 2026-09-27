@@ -8,6 +8,7 @@ local Controllers = script:WaitForChild("Controllers")
 
 local ORDER = {
 	"CharacterState",
+	"KeyboardLayoutController",
 	"AudioController",
 	"UIController",
 	"SettingsController",

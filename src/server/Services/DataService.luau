@@ -132,6 +132,11 @@ local function loadAsync(player: Player): (Profile?, boolean)
 		end
 		if not ok then
 			warn(("[DataService] load attempt %d for %s failed: %s"):format(attempt, player.Name, tostring(result)))
+			-- Studio without "API Services" access / unpublished place: retrying is pointless
+			local message = tostring(result)
+			if message:find("403") or message:find("API") or message:find("publish") then
+				return nil, false
+			end
 		end
 		if not player.Parent then
 			return nil, false

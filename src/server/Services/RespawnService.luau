@@ -103,12 +103,23 @@ local function onCharacterAdded(player: Player, character: Model)
 
 	normalizeScale(humanoid)
 
+	-- Never keep the character frozen for long: if the save is slow, start
+	-- at level 1 and move the player to their checkpoint once it arrives.
 	local waited = 0
-	while not player:GetAttribute("DataLoaded") and player.Parent and waited < 30 do
+	while not player:GetAttribute("DataLoaded") and player.Parent and waited < 4 do
 		waited += task.wait(0.1)
 	end
 	if character.Parent == nil then
 		return
+	end
+	if not player:GetAttribute("DataLoaded") then
+		local connection
+		connection = player:GetAttributeChangedSignal("DataLoaded"):Connect(function()
+			connection:Disconnect()
+			if player.Character == character then
+				RespawnService.sendToCheckpoint(player)
+			end
+		end)
 	end
 
 	local target = targetFor(player)
