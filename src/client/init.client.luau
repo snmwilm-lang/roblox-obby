@@ -30,3 +30,5 @@ end
 for _, name in ORDER do
 	controllers[name].start()
 end
+
+print("[Client] ready")

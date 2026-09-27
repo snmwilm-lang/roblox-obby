@@ -154,6 +154,16 @@ local LevelBuilder = Loader.get("ServerScriptService", "Server", "World", "Level
 local folder = roblox.Instance.new("Folder")
 local stages, highest = WorldBuilder.build(folder)
 check(highest >= 21, "V1 builds at least levels 1-21 (got " .. highest .. ")")
+
+-- A baked world (tools/bake.luau) must re-index to exactly the same stages
+do
+	local indexed, indexedHighest = WorldBuilder.index(folder)
+	eq(indexedHighest, highest, "baked world re-index: level count")
+	for level = 1, highest do
+		local a, b = stages[level], indexed[level]
+		check(b ~= nil and b.Gate == a.Gate and (b.Spawn.Position - a.Spawn.Position).Magnitude < 1e-3, "baked world re-index: level " .. level)
+	end
+end
 for level = 1, highest do
 	check(stages[level] ~= nil, "stage exists " .. level)
 end

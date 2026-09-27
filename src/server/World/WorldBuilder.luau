@@ -72,4 +72,48 @@ function WorldBuilder.build(parent: Instance): ({ [number]: Stage }, number)
 	return stages, highest
 end
 
+--[[
+	Re-indexes a world that was already built (baked into the place file by
+	tools/bake.luau, possibly edited in Studio). Only gameplay data is read:
+	spawn, gate and void height of each level.
+]]
+function WorldBuilder.index(levelsFolder: Instance): ({ [number]: Stage }, number)
+	local stages = {}
+	local highest = 0
+	for _, model in levelsFolder:GetChildren() do
+		local level = model:GetAttribute("Level")
+		local spawn = model:GetAttribute("SpawnCFrame")
+		local gate = model:FindFirstChild("StageGate")
+		if typeof(level) == "number" and typeof(spawn) == "CFrame" and gate then
+			stages[level] = {
+				Level = level,
+				Model = model,
+				Gate = gate,
+				Spawn = spawn,
+				Route = {},
+				VoidY = model:GetAttribute("VoidY") or (spawn.Position.Y - 60),
+			}
+			highest = math.max(highest, level)
+			local finishGate = model:FindFirstChild("FinishGate")
+			local finishSpawn = model:GetAttribute("FinishSpawn")
+			if finishGate and typeof(finishSpawn) == "CFrame" then
+				stages[Config.FINISH_LEVEL] = {
+					Level = Config.FINISH_LEVEL,
+					Model = model,
+					Gate = finishGate,
+					Spawn = finishSpawn,
+					Route = {},
+					VoidY = model:GetAttribute("VoidY"),
+				}
+			end
+		end
+	end
+	-- only a contiguous run of levels from 1 is playable
+	local contiguous = 0
+	while stages[contiguous + 1] do
+		contiguous += 1
+	end
+	return stages, contiguous
+end
+
 return WorldBuilder

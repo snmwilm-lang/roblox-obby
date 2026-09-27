@@ -4,3 +4,5 @@
 *.rbxlx.lock
 sourcemap.json
 .DS_Store
+build/
+!Obby200.rbxl

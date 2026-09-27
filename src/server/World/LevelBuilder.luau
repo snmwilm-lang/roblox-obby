@@ -713,11 +713,17 @@ function LevelBuilder:Finish()
 
 	local forward = self.Origin:VectorToWorldSpace(Vector3.new(0, 0, 1))
 	local spawnPos = self.Origin.Position + self.Origin.UpVector * 3.4
+	local spawn = CFrame.lookAt(spawnPos, spawnPos + forward)
+	-- Stored on the model so a baked (pre-built) world can be re-indexed
+	self.Model:SetAttribute("SpawnCFrame", spawn)
+	if self.FinishSpawn then
+		self.Model:SetAttribute("FinishSpawn", self.FinishSpawn)
+	end
 	return {
 		Level = self.Level,
 		Model = self.Model,
 		Gate = self.Gate,
-		Spawn = CFrame.lookAt(spawnPos, spawnPos + forward),
+		Spawn = spawn,
 		Origin = self.Origin,
 		Exit = self.ExitCFrame,
 		ExitLocal = self.ExitLocal,

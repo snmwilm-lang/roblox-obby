@@ -26,15 +26,27 @@ local touchDebounce: { [Player]: { [number]: number } } = {}
 function StageService.init(allServices)
 	services = allServices
 
-	local root = Instance.new("Folder")
-	root.Name = Config.World.FolderName
-	local levelsFolder = Instance.new("Folder")
-	levelsFolder.Name = "Levels"
-	levelsFolder.Parent = root
-
 	local started = os.clock()
-	stages, highestBuilt = WorldBuilder.build(levelsFolder)
-	root.Parent = workspace
+	local root = workspace:FindFirstChild(Config.World.FolderName)
+	local levelsFolder = root and root:FindFirstChild("Levels")
+	if levelsFolder and #levelsFolder:GetChildren() > 0 then
+		-- World baked into the place file (visible and editable in Studio)
+		stages, highestBuilt = WorldBuilder.index(levelsFolder)
+		print("[StageService] using the world saved in the place")
+	else
+		if root then
+			root:Destroy()
+		end
+		root = Instance.new("Folder")
+		root.Name = Config.World.FolderName
+		levelsFolder = Instance.new("Folder")
+		levelsFolder.Name = "Levels"
+		levelsFolder.Parent = root
+		stages, highestBuilt = WorldBuilder.build(levelsFolder)
+		root.Parent = workspace
+		print("[StageService] world built from code")
+	end
+	assert(highestBuilt > 0, "[StageService] no level found")
 
 	highestCheckpoint = CheckpointRules.sanitize(highestBuilt, highestBuilt)
 	if stages[Config.FINISH_LEVEL] then
@@ -43,10 +55,6 @@ function StageService.init(allServices)
 
 	-- Replicated so the client knows the extent of the playable content
 	root:SetAttribute("HighestBuilt", highestBuilt)
-	for level, stage in stages do
-		stage.Model:SetAttribute("SpawnCFrame", stage.Spawn)
-	end
-
 	local parts = 0
 	for _, d in root:GetDescendants() do
 		if d:IsA("BasePart") then

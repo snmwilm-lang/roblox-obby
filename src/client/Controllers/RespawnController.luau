@@ -19,6 +19,7 @@ local RespawnController = {}
 local controllers
 local reportDeath: RemoteEvent
 local dying = false
+local recentDeaths: { number } = {}
 local invulnerableUntil = 0
 
 function RespawnController.canDie(): boolean
@@ -74,9 +75,11 @@ function RespawnController.die(reason: string)
 	end
 	dying = true
 	reportDeath:FireServer(reason)
-	controllers.AudioController.play("Death")
-	controllers.UIController.flashDeath()
-	deathBurst(root.Position)
+	pcall(function()
+		controllers.AudioController.play("Death")
+		controllers.UIController.flashDeath()
+		deathBurst(root.Position)
+	end)
 	root.Anchored = true
 
 	for _, d in character:GetDescendants() do
@@ -86,22 +89,31 @@ function RespawnController.die(reason: string)
 	end
 
 	task.delay(Config.Respawn.EffectTime, function()
-		local target = player:GetAttribute("RespawnCFrame")
-		if typeof(target) == "CFrame" then
-			pcall(function()
-				player:RequestStreamAroundAsync(target.Position, 2)
-			end)
-		end
-		if root.Parent then
-			RespawnController.returnToCheckpoint()
-			root.Anchored = false
+		-- Whatever happens below, the character is released and visible again.
+		root.Anchored = false
+		local ok, err = pcall(RespawnController.returnToCheckpoint)
+		if not ok then
+			warn("[RespawnController] " .. tostring(err))
 		end
 		for _, d in character:GetDescendants() do
 			if d:IsA("BasePart") or d:IsA("Decal") then
 				d.LocalTransparencyModifier = 0
 			end
 		end
-		invulnerableUntil = os.clock() + Config.Respawn.Invulnerable
+		-- Safety net: a death loop (e.g. a broken checkpoint) must never trap
+		-- the player; after 3 deaths in 2 s, hazards pause for 3 s.
+		local now = os.clock()
+		table.insert(recentDeaths, now)
+		while recentDeaths[1] and now - recentDeaths[1] > 2 do
+			table.remove(recentDeaths, 1)
+		end
+		local grace = Config.Respawn.Invulnerable
+		if #recentDeaths >= 3 then
+			grace = 3
+			table.clear(recentDeaths)
+			warn("[RespawnController] death loop detected, hazards paused for 3 s")
+		end
+		invulnerableUntil = os.clock() + grace
 		dying = false
 	end)
 end

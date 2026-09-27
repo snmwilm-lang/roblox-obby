@@ -99,44 +99,27 @@ local function onCharacterAdded(player: Player, character: Model)
 	end
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	humanoid.BreakJointsOnDeath = false
-	root.Anchored = true
+	-- The character is NEVER anchored here: it spawns on the level 1
+	-- SpawnLocation and is moved to its checkpoint as soon as data is known.
+	task.spawn(normalizeScale, humanoid)
 
-	normalizeScale(humanoid)
+	local function place()
+		if character.Parent == nil or player.Character ~= character then
+			return
+		end
+		local target = targetFor(player)
+		character:PivotTo(target)
+		root.AssemblyLinearVelocity = Vector3.zero
+	end
 
-	-- Never keep the character frozen for long: if the save is slow, start
-	-- at level 1 and move the player to their checkpoint once it arrives.
-	local waited = 0
-	while not player:GetAttribute("DataLoaded") and player.Parent and waited < 4 do
-		waited += task.wait(0.1)
-	end
-	if character.Parent == nil then
-		return
-	end
-	if not player:GetAttribute("DataLoaded") then
+	if player:GetAttribute("DataLoaded") then
+		place()
+	else
 		local connection
 		connection = player:GetAttributeChangedSignal("DataLoaded"):Connect(function()
 			connection:Disconnect()
-			if player.Character == character then
-				RespawnService.sendToCheckpoint(player)
-			end
+			place()
 		end)
-	end
-
-	local target = targetFor(player)
-	pcall(function()
-		player:RequestStreamAroundAsync(target.Position, 5)
-	end)
-	character:PivotTo(target)
-	root.AssemblyLinearVelocity = Vector3.zero
-	local hold = player:GetAttribute("SpeedrunHoldUntil")
-	if typeof(hold) == "number" and hold > workspace:GetServerTimeNow() then
-		task.delay(hold - workspace:GetServerTimeNow(), function()
-			if root.Parent then
-				root.Anchored = false
-			end
-		end)
-	else
-		root.Anchored = false
 	end
 
 	humanoid.Died:Connect(function()
@@ -169,15 +152,16 @@ function RespawnService.sendToCheckpoint(player: Player, hold: number?)
 	pcall(function()
 		player:RequestStreamAroundAsync(target.Position, 5)
 	end)
-	root.Anchored = true
 	character:PivotTo(target)
 	root.AssemblyLinearVelocity = Vector3.zero
 	notify:FireClient(player, { Kind = "Teleported" })
-	task.delay(hold or 0.1, function()
-		if root.Parent then
+	-- Only the speedrun countdown freezes the character, and always releases it
+	if hold and hold > 0 then
+		root.Anchored = true
+		task.delay(hold, function()
 			root.Anchored = false
-		end
-	end)
+		end)
+	end
 end
 
 function RespawnService.start()

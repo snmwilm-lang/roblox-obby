@@ -6,17 +6,18 @@ Difficulty obby de 200 niveaux en 10 zones de 20, où chaque zone apporte une vr
 
 ## Lancer le jeu
 
-Outils : [Rojo](https://rojo.space) 7.4 (et [Lune](https://lune-org.github.io) pour les tests), installables avec `rokit install`.
+Le plus simple : ouvrir **`Obby200.rbxl`** dans Roblox Studio (**File → Open from File…**). La carte est visible directement en mode édition (dossier `Workspace > Obby`), puis **Play** (F5) pour jouer.
+
+Reconstruire ce fichier après une modification du code ([Rojo](https://rojo.space) 7.4 et [Lune](https://lune-org.github.io), installables avec `rokit install`) :
 
 ```bash
-rojo build -o Obby200.rbxlx     # puis ouvrir Obby200.rbxlx dans Roblox Studio
-# ou, pour développer en direct :
-rojo serve                      # + plugin Rojo dans Studio → Connect
+rojo build -o build/place.rbxlx
+lune run tools/bake.luau build/place.rbxlx Obby200.rbxl   # construit la carte dans le fichier
 ```
 
-Dans Studio : **Game Settings → Security → Enable Studio Access to API Services** pour tester la sauvegarde et les classements (sans cela le jeu fonctionne, mais affiche que la progression n'est pas sauvegardée). Recommandé : **Game Settings → Avatar → R15, échelles par défaut**.
+Le serveur réutilise la carte enregistrée dans le fichier (modifiable dans Studio). Si le dossier `Workspace > Obby` est supprimé, il la reconstruit depuis le code au lancement.
 
-Le monde est construit par le serveur au démarrage : lancez **Play** pour voir les niveaux (ils n'existent pas en mode édition).
+Pour tester la sauvegarde et les classements : publier le jeu, puis **Game Settings → Security → Enable Studio Access to API Services** (sans cela le jeu fonctionne, avec un bandeau « progression non sauvegardée »).
 
 ## Tests
 
