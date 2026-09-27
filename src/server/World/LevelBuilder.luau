@@ -26,6 +26,28 @@ local LevelPlan = require(Shared.LevelPlan)
 
 local START_PAD_SIZE = Vector3.new(14, 2, 14)
 
+--[[
+	Difficulty tuning per zone, applied by every builder primitive so each
+	level definition stays readable (authored "at rest") while the whole zone
+	is tightened in one place:
+	  Shrink     small platforms (≤ 8 studs) are scaled down (more precision,
+	             bigger gaps; never under 1.8 studs)
+	  Tempo      periods of movers / doors / pendulums / drawbridges are
+	             multiplied (< 1 = faster)
+	  Spin       spinner & rotor speeds multiplied
+	  Window     ghost visible time, laser off time and falling delays
+	  Force      wind strength
+	The route validator (tests/run.luau) checks every level AFTER this tuning.
+]]
+local HARDNESS = {
+	[1] = { Shrink = 0.78, Tempo = 0.85, Spin = 1.35, Window = 0.85, Force = 1 },
+	[2] = { Shrink = 0.7, Tempo = 0.78, Spin = 1.45, Window = 0.8, Force = 1 },
+	[3] = { Shrink = 0.66, Tempo = 0.75, Spin = 1.5, Window = 0.8, Force = 1.25 },
+	[4] = { Shrink = 0.62, Tempo = 0.72, Spin = 1.55, Window = 0.75, Force = 1.3 },
+	[5] = { Shrink = 0.58, Tempo = 0.7, Spin = 1.6, Window = 0.7, Force = 1.45 },
+}
+local DEFAULT_HARDNESS = HARDNESS[5]
+
 export type RouteNode = {
 	Kind: string, -- "Static" | "Mover" | "Ghost" | "Falling"
 	Top: Vector3, -- level-local top-centre
@@ -63,6 +85,8 @@ function LevelBuilder.new(params: { level: number, origin: CFrame, parent: Insta
 	self.Route = {} :: { RouteNode }
 	self.Ceilings = {} :: { { Center: Vector3, Size: Vector3 } }
 	self.ExitCFrame = nil :: CFrame?
+	self.Hard = HARDNESS[params.zone.Id] or DEFAULT_HARDNESS
+	self.PendingWrap = nil :: number?
 	self._seed = params.level * 7919
 
 	local model = Instance.new("Model")
@@ -141,7 +165,25 @@ function LevelBuilder:_route(kind: string, top: Vector3, size: Vector3, rot: Vec
 		Size = footprint(size, rot),
 		Travel = travel,
 		Part = part,
+		-- set when the jump INTO this node goes around a wraparound wall
+		WrapPath = self.PendingWrap,
 	})
+	self.PendingWrap = nil
+end
+
+-- Applies the zone's platform shrink to a small platform footprint.
+function LevelBuilder:_shrink(size: Vector3, o: { [string]: any }): Vector3
+	if o.keepSize or o.name == "StartPad" or o.name == "Tower" or o.name == "Hub" then
+		return size
+	end
+	local k = self.Hard.Shrink
+	local x = if size.X <= 8 then math.max(1.8, size.X * k) else size.X
+	local z = if size.Z <= 8 then math.max(1.8, size.Z * k) else size.Z
+	if o.shape == "Cylinder" then
+		local d = math.min(x, z)
+		return Vector3.new(d, size.Y, d)
+	end
+	return Vector3.new(x, size.Y, z)
 end
 
 ----------------------------------------------------------------------------
@@ -258,6 +300,7 @@ end
 -- Safe platform on the intended route. pos = top-centre.
 function LevelBuilder:Step(pos: Vector3, size: Vector3, opts: { [string]: any }?): BasePart
 	local o = opts or {}
+	size = self:_shrink(size, o)
 	local part = self:_shaped(pos - Vector3.new(0, size.Y / 2, 0), size, {
 		name = o.name or "Step",
 		shape = o.shape,
@@ -326,8 +369,8 @@ function LevelBuilder:Mover(pos: Vector3, size: Vector3, travel: Vector3, opts: 
 	part.CanTouch = false
 	ObstacleTypes.apply(part, "MovingPlatform", {
 		Travel = self.Origin:VectorToWorldSpace(travel),
-		Period = o.period or 6,
-		Pause = o.pause or 0.5,
+		Period = (o.period or 6) * self.Hard.Tempo,
+		Pause = (o.pause or 0.5) * self.Hard.Tempo,
 		Phase = o.phase or 0,
 		Easing = o.easing or "Sine",
 		LoopType = o.loop or "PingPong",
@@ -393,7 +436,7 @@ function LevelBuilder:Spinner(center: Vector3, opts: { [string]: any }?): Model
 	model:SetAttribute("Pivot", pivot)
 	ObstacleTypes.apply(model, "Rotator", {
 		Axis = "Y",
-		Speed = o.speed or 45,
+		Speed = (o.speed or 45) * self.Hard.Spin,
 		Phase = o.phase or 0,
 	})
 	return model
@@ -412,7 +455,7 @@ function LevelBuilder:Ghost(pos: Vector3, size: Vector3, opts: { [string]: any }
 	})
 	part.CanTouch = false
 	ObstacleTypes.apply(part, "GhostPlatform", {
-		VisibleDuration = o.visible or 2.5,
+		VisibleDuration = (o.visible or 2.5) * self.Hard.Window,
 		InvisibleDuration = o.invisible or 1.5,
 		PhaseOffset = o.phase or 0,
 		WarnTime = o.warn or 0.6,
@@ -435,7 +478,7 @@ function LevelBuilder:Falling(pos: Vector3, size: Vector3, opts: { [string]: any
 	})
 	part.CanTouch = false
 	ObstacleTypes.apply(part, "FallingPlatform", {
-		FallDelay = o.fallDelay or 0.6,
+		FallDelay = math.max(0.4, (o.fallDelay or 0.6) * self.Hard.Window),
 		ShakeDuration = o.shake or 0.45,
 		RespawnDelay = o.respawn or 3,
 	})
@@ -545,8 +588,8 @@ function LevelBuilder:Door(pos: Vector3, size: Vector3, travel: Vector3, opts: {
 	part.CanTouch = false
 	ObstacleTypes.apply(part, "MovingPlatform", {
 		Travel = self.Origin:VectorToWorldSpace(travel),
-		Period = o.period or 4,
-		Pause = o.pause or 1,
+		Period = (o.period or 4) * self.Hard.Tempo,
+		Pause = (o.pause or 1) * self.Hard.Tempo,
 		Phase = o.phase or 0,
 		Easing = "Sine",
 		LoopType = "PingPong",
@@ -570,7 +613,7 @@ function LevelBuilder:Laser(pos: Vector3, size: Vector3, opts: { [string]: any }
 	part:AddTag("Hazard")
 	ObstacleTypes.apply(part, "Laser", {
 		OnTime = o.on or 1.5,
-		OffTime = o.off or 2,
+		OffTime = (o.off or 2) * self.Hard.Window,
 		WarnTime = o.warn or 0.6,
 		Phase = o.phase or 0,
 	})
@@ -589,7 +632,7 @@ function LevelBuilder:_swing(instance: Instance, pivot: CFrame, o: { [string]: a
 		Axis = o.axis or "Z",
 		Amplitude = o.amplitude or 50,
 		Offset = o.offset or 0,
-		Period = o.period or 3,
+		Period = (o.period or 3) * self.Hard.Tempo,
 		Phase = o.phase or 0,
 	})
 end
@@ -696,7 +739,7 @@ function LevelBuilder:Rotor(center: Vector3, opts: { [string]: any }?): Model
 	local pivot = self:ToWorld(center)
 	first.PivotOffset = first.CFrame:ToObjectSpace(pivot)
 	model:SetAttribute("Pivot", pivot)
-	ObstacleTypes.apply(model, "Rotator", { Axis = "Y", Speed = o.speed or 30, Phase = o.phase or 0 })
+	ObstacleTypes.apply(model, "Rotator", { Axis = "Y", Speed = (o.speed or 30) * self.Hard.Spin, Phase = o.phase or 0 })
 	if o.route ~= false then
 		table.insert(self.Route, { Kind = "Rotor", Top = center, Size = Vector3.new(length, 1, length) })
 	end
@@ -734,7 +777,7 @@ function LevelBuilder:Wind(pos: Vector3, size: Vector3, velocity: Vector3, opts:
 		CanQuery = false,
 	})
 	ObstacleTypes.apply(part, "WindZone", {
-		Velocity = self.Origin:VectorToWorldSpace(velocity),
+		Velocity = self.Origin:VectorToWorldSpace(velocity * self.Hard.Force),
 		OnTime = o.on or 0,
 		OffTime = o.off or 0,
 		WarnTime = o.warn or 0.8,
@@ -767,6 +810,37 @@ function LevelBuilder:Chaser(pos: Vector3, size: Vector3, travel: Vector3, speed
 		StartRadius = o.startRadius or 0,
 	})
 	return part
+end
+
+--[[
+	Wraparound (the real obby trick, no ledge): a wall stands between the end
+	of one platform and the start of the next, and sticks out `overhang` studs
+	past the path's side edge. You jump off the side, go around the wall's end
+	in the air and land behind it. Only one side is open.
+	  y: floor height · z: wall centre · width: path width
+	  opts: overhang (studs past the edge), side (1 right / -1 left), thickness
+	The NEXT route platform records the air path length, which the validator
+	compares with what one jump can cover:  2 × (overhang + 1) + thickness.
+]]
+function LevelBuilder:Wrap(y: number, z: number, width: number, opts: { [string]: any }?): BasePart
+	local o = opts or {}
+	local side = o.side or 1
+	local overhang = o.overhang or 1
+	local thickness = o.thickness or 1
+	local near = side * (width / 2 + overhang)
+	local far = -side * (width / 2 + 6)
+	local wall = self:Wall(Vector3.new((near + far) / 2, y + 3, z), Vector3.new(math.abs(near - far), 22, thickness), {
+		name = "WrapWall",
+		material = o.material,
+	})
+	-- a thin neon strip marks the edge you go around
+	self:Decor(Vector3.new(near - side * 0.15, y + 3, z), Vector3.new(0.3, 22, thickness + 0.1), {
+		name = "WrapEdge",
+		color = Palette.Final.Color,
+		material = Enum.Material.Neon,
+	})
+	self.PendingWrap = 2 * (overhang + 1) + thickness
+	return wall
 end
 
 -- Low ceiling (head hitter). pos = centre. The validator caps jumps under it.

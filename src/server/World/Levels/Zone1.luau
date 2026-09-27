@@ -169,16 +169,14 @@ Levels[9] = function(L)
 	L:Exit(V(0, 14, 64))
 end
 
--- 10 · First Wraparound — walk around two walls; the second ledge needs a tiny hop.
+-- 10 · First Wraparound — jump off the side, around the wall's edge, land behind it.
 Levels[10] = function(L)
-	L:Sign(V(-4.5, 2, 5), "Walls can be walked around.\nHug the edge.", { width = 6, height = 2.2 })
-	L:Step(V(0, 0, 16), V(6, 1, 18))
-	L:Wall(V(0, 5, 26), V(8, 14, 2), { name = "WrapWall" })
-	L:Step(V(4.75, 0, 26), V(3.5, 1, 8), { name = "Ledge" })
-	L:Step(V(0, 0, 36), V(6, 1, 18))
-	L:Wall(V(0, 5, 46), V(8, 14, 2), { name = "WrapWall" })
-	L:Step(V(-5.25, 0, 45), V(3, 1, 6), { name = "Ledge" })
-	L:Step(V(0, 0, 54), V(6, 1, 14))
+	L:Sign(V(-4.5, 2, 5), "Jump AROUND the wall edge.\nShift lock helps (Shift).", { width = 6, height = 2.2 })
+	L:Step(V(0, 0, 16), V(6, 1, 18), { keepSize = true })
+	L:Wrap(0, 25.5, 6, { overhang = 0.5, side = 1 })
+	L:Step(V(0, 0, 36), V(6, 1, 20), { keepSize = true })
+	L:Wrap(0, 46.5, 6, { overhang = 1, side = -1 })
+	L:Step(V(0, 0, 54), V(6, 1, 14), { keepSize = true })
 	L:Exit(V(0, 0, 71))
 end
 
@@ -239,19 +237,16 @@ Levels[15] = function(L)
 	L:Exit(V(12.5, 4, 71))
 end
 
--- 16 · Wraparound Ridge — jump around three cliffs, alternating sides.
+-- 16 · Wraparound Ridge — three wraps, alternating sides, each a bit longer.
 Levels[16] = function(L)
-	L:Step(V(0, 0, 13), V(4, 1, 12))
-	L:Wall(V(0, 6, 20), V(8, 16, 2), { name = "Cliff", material = Enum.Material.Rock })
-	L:Step(V(5.25, 0, 20), V(2.5, 1, 6), { name = "Ledge" })
-	L:Step(V(0, 0, 27), V(4, 1, 12))
-	L:Wall(V(0, 6, 34), V(8, 16, 2), { name = "Cliff", material = Enum.Material.Rock })
-	L:Step(V(-5.25, 0, 34), V(2.5, 1, 5), { name = "Ledge" })
-	L:Step(V(0, 0, 41), V(4, 1, 12))
-	L:Wall(V(0, 6, 48), V(10, 16, 2), { name = "Cliff", material = Enum.Material.Rock })
-	L:Step(V(6.25, 0, 48), V(2.5, 1, 5), { name = "Ledge" })
-	L:Step(V(0, 0, 53.5), V(4, 1, 9))
-	L:Exit(V(0, 0, 67))
+	L:Step(V(0, 0, 13), V(4, 1, 12), { keepSize = true })
+	L:Wrap(0, 19.5, 4, { overhang = 1, side = 1 })
+	L:Step(V(0, 0, 26), V(4, 1, 12), { keepSize = true })
+	L:Wrap(0, 32.5, 4, { overhang = 1.5, side = -1 })
+	L:Step(V(0, 0, 39), V(4, 1, 12), { keepSize = true })
+	L:Wrap(0, 45.5, 4, { overhang = 1.5, side = 1 })
+	L:Step(V(0, 0, 52), V(4, 1, 12), { keepSize = true })
+	L:Exit(V(0, 0, 68))
 end
 
 -- 17 · Piston Alley — four pistons firing in a wave: read the rhythm, walk through.
@@ -310,15 +305,14 @@ Levels[20] = function(L)
 	L:Step(V(4, 1, 19), V(4, 1, 4), { shape = "Cylinder" })
 	L:Step(V(0, 2, 26), V(4, 1, 4))
 	L:Step(V(-4, 2, 33), V(4, 1, 4))
-	L:Step(V(0, 2, 44), V(4, 1, 14))
+	L:Step(V(0, 2, 44), V(4, 1, 14), { keepSize = true })
 	L:Kill(V(0, 2.5, 41), V(4, 1, 1), { name = "Hurdle" })
 	L:Kill(V(0, 2.5, 47), V(4, 1, 1), { name = "Hurdle" })
 
 	-- II · Wraparound
-	L:Wall(V(0, 8, 52), V(8, 16, 2), { name = "Cliff", material = Enum.Material.Rock })
-	L:Step(V(5.25, 2, 52), V(2.5, 1, 6), { name = "Ledge" })
-	L:Step(V(0, 2, 61), V(4, 1, 12))
-	L:SectionLabel(V(-3, 3.5, 58), "II · AROUND")
+	L:Wrap(2, 51.5, 4, { overhang = 1.5, side = 1 })
+	L:Step(V(0, 2, 59.5), V(4, 1, 15), { keepSize = true })
+	L:SectionLabel(V(-3, 3.5, 56), "II · AROUND")
 
 	-- III · Ferries (diagonal lift, then a lateral ferry)
 	L:Mover(V(0, 2, 72), V(5, 1, 5), V(0, 4, 10), { period = 5, pause = 0.8 })

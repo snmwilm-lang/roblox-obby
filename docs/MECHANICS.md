@@ -15,7 +15,9 @@ Réglages imposés (`Config.Character`, `default.project.json`) : WalkSpeed 16, 
 | Hauteur max | ≈ 6.37 studs | marches ≤ 5.9 dans les tests |
 | Hitbox mortelle | 1.6 × 5.6 × 1.6, depuis 0.2 sous les pieds | limbo ≥ 5.9 au-dessus du sol |
 
-Budget d'écart (fraction du saut maximum à la même hauteur, vérifié par `tests/run.luau`) : zone 1 ≤ 0.62, zone 2 ≤ 0.70, puis ≤ 0.80 ; +0.05 sur les Final Stages. Les zones 9-10 pourront monter à 0.85-0.9, jamais au-delà (au-delà, le saut devient dépendant du framerate et du ping).
+Budget d'écart (fraction du saut maximum, vérifié par `tests/run.luau`) : zone 1 ≤ 0.68, zone 2 ≤ 0.75, zone 3 ≤ 0.80, zone 4 ≤ 0.84, zone 5 ≤ 0.86 ; +0.05 sur les Final Stages.
+
+Durcissement par zone (`HARDNESS` dans `LevelBuilder`, appliqué à tous les niveaux) : plateformes réduites (×0.78 → ×0.58), cycles accélérés (×0.85 → ×0.70), spinners plus rapides (×1.35 → ×1.6), fenêtres raccourcies (×0.85 → ×0.70), vent renforcé. Le validateur vérifie les niveaux après ce durcissement. Les zones 9-10 pourront monter à 0.85-0.9, jamais au-delà (au-delà, le saut devient dépendant du framerate et du ping).
 
 ---
 
@@ -63,15 +65,15 @@ Budget d'écart (fraction du saut maximum à la même hauteur, vérifié par `te
 8. **Visuel** : bras rouges, moyeu métal.
 9. **Sonore** : (expansion) whoosh à chaque passage près du joueur.
 
-## 5. Wraparound ✔ (géométrie)
-1. **Fonctionnement** : un mur bloque le chemin, on le contourne par une corniche en longeant son bord.
-2. **Variables** : largeur de corniche, écart corniche/chemin, largeur du mur, côté.
-3. **Difficulté** : marche simple (niv. 10) → petits sauts latéraux (16) → contournements multiples, sous surplomb, sur tour (zone 4).
-4. **Interactions** : head hitters, ascensions, glace (zone 6, très exigeant).
-5. **Technique** : murs de 14-16 de haut (impossibles à sauter) ; normalisation des échelles d'avatar pour que tout le monde ait la même largeur.
-6. **Multijoueur** : pas de collision entre joueurs → pas de bouchon sur la corniche.
-7. **Mobile** : corniche ≥ 2.5 studs ; aucun wraparound ne demande de tourner la caméra.
-8. **Visuel** : mur en roche/structure, corniche en sol sûr.
+## 5. Wraparound ✔ (`LevelBuilder:Wrap`)
+1. **Fonctionnement** (définition obby classique) : un mur se dresse entre la fin d'une plateforme et le début de la suivante et dépasse le bord du chemin de `overhang` studs. **Pas de corniche** : on saute du bord, on contourne l'extrémité du mur en l'air et on atterrit derrière. Un seul côté est ouvert ; une bande dorée marque l'arête à contourner.
+2. **Variables** : `overhang` (studs de dépassement), `side`, `thickness`, largeur du chemin, plafond éventuel (saut raccourci).
+3. **Difficulté** : chemin aérien = 2 × (overhang + 1) + épaisseur, comparé à ce qu'un saut couvre (≈ 9 studs). 0.5 stud (niv. 10) → 1.5 (16, 20) → 2–2.25 (65, 76, 80) → 1 stud sous plafond (68 : saut court, timing parfait). Au-delà de ~2.5 studs, les obbies utilisent des glitchs d'emote : exclus ici.
+4. **Interactions** : plafonds bas, petites zones d'atterrissage (double wrap), plus tard glace/gravité.
+5. **Technique** : le validateur mesure le chemin aérien réel autour du mur ; les échelles d'avatar sont normalisées (même largeur pour tous).
+6. **Multijoueur** : pas de collision entre joueurs.
+7. **Mobile** : faisable au joystick ; le **shift lock** (bouton à l'écran) rend la trajectoire nette sur tous les supports.
+8. **Visuel** : mur de la zone + arête dorée néon.
 9. **Sonore** : —
 
 ## 6. Limbo bars ✔ (Hazard)

@@ -21,13 +21,13 @@ Courbe dans chaque zone : X1 introduction · X2–X5 apprentissage · X6–X10 d
 | 7 | Pillar Hop | 1.38 | Round pillars | Rising jumps | Medium | 27s | Atterrir sur des cylindres tout en montant. | ✔ |  |
 | 8 | Lava Floor | 1.43 | Kill floor | Path reading | Medium | 27s | Lire un chemin sinueux de dalles au-dessus d'une salle de lave. | ✔ |  |
 | 9 | Elevator | 1.48 | Vertical mover | Crossing movers | Medium | 27s | Ascenseur puis transfert entre deux navettes opposées. | ✔ |  |
-| 10 | First Wraparound | 1.53 | Wraparound | Ledges | Medium | 27s | Contourner deux murs en longeant leur bord. | ✔ |  |
+| 10 | First Wraparound | 1.53 | Wraparound | Ledges | Medium | 27s | Premiers wraparounds : sauter autour du bord d'un mur, sans corniche. | ✔ |  |
 | 11 | The Sweeper | 1.59 | Spinner | Jump or wait | Medium | 27s | Traverser un disque balayé par une barre lente : sauter ou attendre. | ✔ |  |
 | 12 | Don't Jump | 1.64 | Limbo bars | Hurdles | Medium | 27s | Alterner : passer SOUS une barre, sauter PAR-DESSUS la suivante. | ✔ |  |
 | 13 | Ferry Line | 1.69 | Moving platforms | Timing | Medium | 27s | Enchaîner trois navettes qui se rejoignent en bout de course. | ✔ |  |
 | 14 | Twin Sweepers | 1.73 | Spinners | Narrow bridge | Medium | 27s | Sauter une barre basse puis attendre une lame haute. | ✔ |  |
 | 15 | Tightrope | 1.77 | Thin beams | Turns | Medium | 27s | Poutres de 1.5 stud montantes avec virage à 90°. | ✔ |  |
-| 16 | Wraparound Ridge | 1.82 | Wraparounds | Side jumps | Medium | 27s | Sauter autour de trois falaises, côtés alternés. | ✔ |  |
+| 16 | Wraparound Ridge | 1.82 | Wraparounds | Side jumps | Medium | 27s | Trois wraparounds de plus en plus longs, côtés alternés. | ✔ |  |
 | 17 | Piston Alley | 1.86 | Moving hazards | Timing | Medium | 27s | Couloir de quatre pistons décalés : lire leur rythme. | ✔ |  |
 | 18 | Sky Circuit | 1.89 | Mover + spinner | Stones | Medium | 27s | Sauter une barre tournante en étant sur une navette. | ✔ |  |
 | 19 | The Threshold | 1.93 | Review | Pre-final | Long | 43s | Révision de la zone ; enchaîne sans checkpoint sur le 20. | ✔ |  |
@@ -97,10 +97,10 @@ Courbe dans chaque zone : X1 introduction · X2–X5 apprentissage · X6–X10 d
 | 62 | Ladder Line | 4.07 | Ladders | Jumps | Short | 34s | Sauter d'échelle en plateforme. | ✔ |  |
 | 63 | Head Hitter | 4.13 | Head hitters | - | Short | 34s | Sauts sous plafond bas : saut court maîtrisé. | ✔ |  |
 | 64 | Spiral Stair | 4.19 | Tower ascent | - | Short | 34s | Escalier en spirale autour d'une tour. | ✔ |  |
-| 65 | Corner Kick | 4.25 | Corner jumps | Shift lock | Short | 34s | Sauter autour des coins de murs (le shift lock aide). | ✔ |  |
+| 65 | Corner Kick | 4.25 | Corner jumps | Shift lock | Short | 34s | Wraparounds de 2 studs : sauter tard, contourner en l'air (shift lock). | ✔ |  |
 | 66 | Truss Hop | 4.33 | Truss | Truss tops | Medium | 42s | Se tenir sur le haut d'un treillis et sauter au suivant. | ✔ |  |
 | 67 | Chimney | 4.38 | Vertical shaft | Alternating ledges | Medium | 42s | Cheminée étroite, corniches alternées. | ✔ |  |
-| 68 | Overhang | 4.43 | Advanced wraparound | Head hitter | Medium | 42s | Contournement sous un surplomb. | ✔ |  |
+| 68 | Overhang | 4.43 | Wraparound | Head hitter | Medium | 42s | Wraparounds sous un plafond bas : saut court, timing parfait. | ✔ |  |
 | 69 | Pillar Ascent | 4.48 | Ascent | Shrinking ledges | Medium | 42s | Monter autour d'un pilier, corniches de plus en plus fines. | ✔ |  |
 | 70 | Tower Wrap | 4.53 | Wraparounds | Corners | Medium | 42s | Contournements sur les coins d'une tour. | ✔ |  |
 | 71 | Low Bridge | 4.59 | Head hitters | Rising steps | Medium | 42s | Couloir montant sous des plafonds bas. | ✔ |  |
@@ -108,7 +108,7 @@ Courbe dans chaque zone : X1 introduction · X2–X5 apprentissage · X6–X10 d
 | 73 | Scaffolding | 4.69 | Vertical maze | Route reading | Medium | 42s | Labyrinthe d'échafaudages à lire de bas en haut. | ✔ |  |
 | 74 | Corner Hops | 4.73 | L-corner jumps | Precision | Medium | 42s | Sauts d'angle en L. | ✔ |  |
 | 75 | Lift Shaft | 4.77 | Vertical movers | Head hitters | Medium | 42s | Ascenseurs avec plafonds. | ✔ |  |
-| 76 | Double Wrap | 4.82 | Double wraparounds | Narrow ledges | Medium | 42s | Deux contournements enchaînés. | ✔ |  |
+| 76 | Double Wrap | 4.82 | Double wraparounds | Tiny landing | Medium | 42s | Deux wraparounds enchaînés avec 3 studs d'atterrissage entre les deux. | ✔ |  |
 | 77 | Sky Ladder | 4.86 | Ladders on movers | Timing | Medium | 42s | Échelles suspendues à des plateformes mobiles. | ✔ |  |
 | 78 | Wrap Tower | 4.89 | Tower ascent | Tiny ledges | Medium | 42s | Grande spirale, corniches de 2 studs en haut. | ✔ |  |
 | 79 | The Spire | 4.93 | Review | Pre-final | Long | 67s | Ascension de révision. | ✔ |  |

@@ -265,7 +265,10 @@ local function jumpBetween(a, pa: Vector3, b, pb: Vector3, ceilings): (number, n
 		dh = math.max(b.Bottom - origin.Y, math.min(0, b.Top.Y - origin.Y))
 	end
 	local d = gap(origin, a.Size, target, b.Size)
-	if d <= 0 and dh <= 0.6 then
+	if b.WrapPath then
+		-- around a wraparound wall: out, past the wall, back in (air control)
+		d = b.WrapPath
+	elseif d <= 0 and dh <= 0.6 then
 		return 0, d, dh, 0.1
 	end
 	local v = if a.Kind == "JumpPad" then a.Power else C.JumpPower
@@ -282,7 +285,7 @@ local function jumpBetween(a, pa: Vector3, b, pb: Vector3, ceilings): (number, n
 end
 
 -- Per-zone budget: fraction of the maximum jump a normal level may ask for.
-local BUDGET = { [1] = 0.62, [2] = 0.7, [3] = 0.75, [4] = 0.78, [5] = 0.8 }
+local BUDGET = { [1] = 0.68, [2] = 0.75, [3] = 0.8, [4] = 0.84, [5] = 0.86 }
 
 local function jumpRatio(a, b, ceilings): (number, number, number)
 	local best = math.huge
@@ -512,8 +515,8 @@ end
 -- Tries take-off/landing point pairs spread over both footprints; the jump is
 -- blocked only if every reasonable pair is blocked.
 local function pathBlocked(a, b, boxes, ceilings): BasePart?
-	if a.Kind == "Truss" or b.Kind == "Truss" or isDynamic(a) or isDynamic(b) or a.Kind == "Rotor" or b.Kind == "Rotor" then
-		return nil
+	if b.WrapPath or a.Kind == "Truss" or b.Kind == "Truss" or isDynamic(a) or isDynamic(b) or a.Kind == "Rotor" or b.Kind == "Rotor" then
+		return nil -- wraparounds curve around their wall by design
 	end
 	local bestGap = gap(a.Top, a.Size, b.Top, b.Size)
 	local v = if a.Kind == "JumpPad" then a.Power else C.JumpPower

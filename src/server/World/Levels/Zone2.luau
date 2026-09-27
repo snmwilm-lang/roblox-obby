@@ -134,7 +134,7 @@ Levels[30] = function(L)
 	local zs = { 11, 15, 19, 23, 27, 31, 35, 39 }
 	for i, z in zs do
 		local left = i % 2 == 1
-		L:Ghost(V(if left then -3 else 3, 0, z), V(4, 1, 4), { visible = 2.4, invisible = 1.2, phase = if left then 0 else 0.5 })
+		L:Ghost(V(if left then -3 else 3, 0, z), V(4, 1, 4), { visible = 2.8, invisible = 1.2, phase = if left then 0 else 0.5 })
 	end
 	L:Exit(V(0, 0, 50))
 end
@@ -221,8 +221,8 @@ end
 
 -- 39 · The Escapement — pre-final: ghosts, door, pendulum, laser, lift.
 Levels[39] = function(L)
-	L:Ghost(V(0, 0, 12), V(5, 1, 5), { visible = 2.5, invisible = 1.5, phase = 0 })
-	L:Ghost(V(0, 0, 20), V(5, 1, 5), { visible = 2.5, invisible = 1.5, phase = 0.5 })
+	L:Ghost(V(0, 0, 12), V(5, 1, 5), { visible = 3, invisible = 1.5, phase = 0 })
+	L:Ghost(V(0, 0, 20), V(5, 1, 5), { visible = 3, invisible = 1.5, phase = 0.5 })
 	L:Step(V(0, 0, 30), V(8, 1, 8))
 	corridor(L, 0, 34, 62)
 	door(L, 0, 40, 8, { period = 4, pause = 1.2 })
