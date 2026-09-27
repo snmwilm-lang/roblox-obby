@@ -182,7 +182,7 @@ Décision du propriétaire du jeu (révise la règle initiale « skill only ») 
 |---|---|---|
 | Skip level | 17 R$ | passe au checkpoint suivant (19 → 21 saute aussi le Final Stage) ; indisponible pendant un speedrun |
 | Kill everyone | 2 500 R$ | chaque autre joueur du serveur meurt (retour à son checkpoint) ; annonce à tout le serveur |
-| Everyone to level 1 | 150 000 R$ | chaque autre joueur du serveur repart du niveau 1 (checkpoint sauvegardé remis à 1) ; annonce |
+| Everyone to level 1 | 15 000 R$ | chaque autre joueur du serveur repart du niveau 1 (checkpoint sauvegardé remis à 1) ; annonce |
 
 Garde-fous conservés :
 * le **meilleur niveau**, les classements et les complétions ne sont jamais retirés à une victime ;

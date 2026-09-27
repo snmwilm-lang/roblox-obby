@@ -72,7 +72,7 @@ Config.Leaderboards = {
 Config.Products = {
 	SkipLevel = { Id = 0, Price = 17 }, -- move to the next checkpoint
 	KillEveryone = { Id = 0, Price = 2500 }, -- everyone else back to their checkpoint
-	ResetEveryone = { Id = 0, Price = 150000 }, -- everyone else back to level 1
+	ResetEveryone = { Id = 0, Price = 15000 }, -- everyone else back to level 1
 }
 -- ResetEveryone resets the SAVED checkpoint of the victims; their best level,
 -- leaderboard entries and completions are kept.

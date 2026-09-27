@@ -46,7 +46,7 @@ Le bouton **SHOP** propose trois produits (prix affichés : `src/shared/Config.l
 |---|---|---|
 | Skip level | 17 R$ | passe au checkpoint suivant |
 | Kill everyone | 2 500 R$ | tous les autres joueurs du serveur retournent à leur checkpoint |
-| Everyone to level 1 | 150 000 R$ | tous les autres joueurs du serveur repartent du niveau 1 (checkpoint sauvegardé remis à 1 ; meilleur niveau et classements conservés) |
+| Everyone to level 1 | 15 000 R$ | tous les autres joueurs du serveur repartent du niveau 1 (checkpoint sauvegardé remis à 1 ; meilleur niveau et classements conservés) |
 
 Mise en place (obligatoire, Roblox ne permet pas de créer les produits depuis le code) :
 1. Publier le jeu, puis sur create.roblox.com : **Creations → le jeu → Monetization → Developer Products → Create**.
