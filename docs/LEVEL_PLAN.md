@@ -54,8 +54,8 @@ Courbe dans chaque zone : X1 introduction · X2–X5 apprentissage · X6–X10 d
 | 33 | Countdown Bridge | 2.69 | Ghost bridge | Commitment | Medium | 32s | Pont visible 3 secondes : partir au bon signal. | ✔ |  |
 | 34 | Shutters | 2.73 | Timed doors | Lasers | Medium | 32s | Fenêtres de portes superposées à des fenêtres laser. | ✔ |  |
 | 35 | Clock Face | 2.77 | Spinners | Hub hops | Medium | 32s | Plateformes sur un cadran, deux aiguilles à vitesses différentes. | ✔ |  |
-| 36 | Staccato | 2.82 | Kill pulses | Precision | Medium | 32s | Dalles électrifiées selon un motif répétitif. | ✔ |  |
-| 37 | Assembly Line | 2.86 | Circle movers | Pistons | Medium | 32s | Plateformes en orbite entre des pistons. | ✔ |  |
+| 36 | Staccato | 2.82 | Laser floor | Timing | Medium | 32s | Bandes électrifiées au sol qui s'allument en alternance. | ✔ |  |
+| 37 | Assembly Line | 2.86 | Circle movers | Timing | Medium | 32s | Deux navettes en orbite, décalées d'un demi-tour. | ✔ |  |
 | 38 | Polyrhythm | 2.89 | Mixed periods | Observation | Medium | 32s | Cycles de 3 s et 4 s : attendre qu'ils s'alignent. | ✔ |  |
 | 39 | The Escapement | 2.93 | Review | Pre-final | Long | 51s | Portes, lasers et fantômes en un seul flux. | ✔ |  |
 | 40 | **Grand Clockwork** | 2.99 | FINAL STAGE | All timing | Final (x4) | 128s | Parcours multi-cycles finissant dans une tour synchronisée. | ✘ | ★ |
@@ -74,9 +74,9 @@ Courbe dans chaque zone : X1 introduction · X2–X5 apprentissage · X6–X10 d
 | 46 | Bounce House | 3.33 | Jump pad chain | Air control | Medium | 37s | De pad en pad en contrôlant sa trajectoire. | ✔ |  |
 | 47 | Crosswind Belts | 3.38 | Side conveyors | Precision | Medium | 37s | Tapis latéraux qui poussent vers le vide. | ✔ |  |
 | 48 | Momentum Gate | 3.43 | Momentum gate | Boost | Medium | 37s | Passage exigeant une vitesse d'arrivée, source de vitesse visible. | ✔ |  |
-| 49 | Ramp Jump | 3.48 | Ramps | Boost | Medium | 37s | S'envoler depuis des rampes. | ✔ |  |
+| 49 | Pad Ladder | 3.48 | Jump pads | Ascent | Medium | 37s | Remonter une paroi du canyon de pad en pad. | ✔ |  |
 | 50 | Canyon Crossing | 3.53 | Conveyors | Jump pads | Medium | 37s | Mi-zone : tapis et pads combinés. | ✔ |  |
-| 51 | Slingshot | 3.59 | Launcher platforms | Landing | Medium | 37s | Plateformes qui propulsent en fin de course (impulsion scriptée). | ✔ |  |
+| 51 | Slingshot | 3.59 | Fast ferries | Momentum | Medium | 37s | Sauter d'une navette rapide en mouvement pour aller plus loin. | ✔ |  |
 | 52 | Belt Maze | 3.64 | Conveyor grid | Route choice | Medium | 37s | Grille de tapis : choisir sa route. | ✔ |  |
 | 53 | Ricochet | 3.69 | Angled pads | Timing | Medium | 37s | Pads inclinés entre deux murs. | ✔ |  |
 | 54 | Rolling Hills | 3.73 | Slopes | Keep speed | Medium | 37s | Conserver sa vitesse sur des bosses. | ✔ |  |
@@ -97,20 +97,20 @@ Courbe dans chaque zone : X1 introduction · X2–X5 apprentissage · X6–X10 d
 | 62 | Ladder Line | 4.07 | Ladders | Jumps | Short | 34s | Sauter d'échelle en plateforme. | ✔ |  |
 | 63 | Head Hitter | 4.13 | Head hitters | - | Short | 34s | Sauts sous plafond bas : saut court maîtrisé. | ✔ |  |
 | 64 | Spiral Stair | 4.19 | Tower ascent | - | Short | 34s | Escalier en spirale autour d'une tour. | ✔ |  |
-| 65 | Corner Kick | 4.25 | Wall hop (guided) | - | Short | 34s | Premier wall hop, surface large et tutoriel visuel. | ✔ |  |
-| 66 | Truss Flick | 4.33 | Truss jumps | Air control | Medium | 42s | Sauter d'un treillis à l'autre. | ✔ |  |
+| 65 | Corner Kick | 4.25 | Corner jumps | Shift lock | Short | 34s | Sauter autour des coins de murs (le shift lock aide). | ✔ |  |
+| 66 | Truss Hop | 4.33 | Truss | Truss tops | Medium | 42s | Se tenir sur le haut d'un treillis et sauter au suivant. | ✔ |  |
 | 67 | Chimney | 4.38 | Vertical shaft | Alternating ledges | Medium | 42s | Cheminée étroite, corniches alternées. | ✔ |  |
 | 68 | Overhang | 4.43 | Advanced wraparound | Head hitter | Medium | 42s | Contournement sous un surplomb. | ✔ |  |
 | 69 | Pillar Ascent | 4.48 | Ascent | Shrinking ledges | Medium | 42s | Monter autour d'un pilier, corniches de plus en plus fines. | ✔ |  |
 | 70 | Tower Wrap | 4.53 | Wraparounds | Corners | Medium | 42s | Contournements sur les coins d'une tour. | ✔ |  |
-| 71 | Ceiling Crawl | 4.59 | Head hitters | Kill ceiling | Medium | 42s | Head hitters sous un plafond mortel. | ✔ |  |
-| 72 | Swinging Truss | 4.64 | Moving truss | Timing | Medium | 42s | Treillis mobiles à attraper au bon moment. | ✔ |  |
+| 71 | Low Bridge | 4.59 | Head hitters | Rising steps | Medium | 42s | Couloir montant sous des plafonds bas. | ✔ |  |
+| 72 | Ferry Ladder | 4.64 | Moving platforms | Truss | Medium | 42s | Une navette amène à une échelle, deux fois. | ✔ |  |
 | 73 | Scaffolding | 4.69 | Vertical maze | Route reading | Medium | 42s | Labyrinthe d'échafaudages à lire de bas en haut. | ✔ |  |
 | 74 | Corner Hops | 4.73 | L-corner jumps | Precision | Medium | 42s | Sauts d'angle en L. | ✔ |  |
 | 75 | Lift Shaft | 4.77 | Vertical movers | Head hitters | Medium | 42s | Ascenseurs avec plafonds. | ✔ |  |
 | 76 | Double Wrap | 4.82 | Double wraparounds | Narrow ledges | Medium | 42s | Deux contournements enchaînés. | ✔ |  |
 | 77 | Sky Ladder | 4.86 | Ladders on movers | Timing | Medium | 42s | Échelles suspendues à des plateformes mobiles. | ✔ |  |
-| 78 | Wall Hop Tower | 4.89 | Wall hops | Ascent | Medium | 42s | Tour de wall hops, chacun avec zone de réessai proche. | ✔ |  |
+| 78 | Wrap Tower | 4.89 | Tower ascent | Tiny ledges | Medium | 42s | Grande spirale, corniches de 2 studs en haut. | ✔ |  |
 | 79 | The Spire | 4.93 | Review | Pre-final | Long | 67s | Ascension de révision. | ✔ |  |
 | 80 | **Summit Ascent** | 4.99 | FINAL STAGE | Grand ascent | Final (x4) | 168s | Grande ascension autour d'une aiguille géante. | ✘ | ★ |
 
@@ -123,7 +123,7 @@ Courbe dans chaque zone : X1 introduction · X2–X5 apprentissage · X6–X10 d
 | 81 | Crumble | 5.01 | Falling platforms | - | Short | 38s | Plateformes qui craquent puis tombent : ne pas s'arrêter. | ✔ |  |
 | 82 | Gust | 5.07 | Wind zones | - | Short | 38s | Vent visible (particules) poussant latéralement. | ✔ |  |
 | 83 | Seesaw | 5.13 | Tilting blocks | - | Short | 38s | Blocs qui basculent selon un cycle lisible. | ✔ |  |
-| 84 | Closing In | 5.19 | Moving walls | - | Short | 38s | Des murs se rapprochent : avancer. | ✔ |  |
+| 84 | Closing In | 5.19 | Crushers | Timing | Short | 38s | Des presses tombent du plafond en vague. | ✔ |  |
 | 85 | Crumble Run | 5.25 | Falling platforms | Speed | Short | 38s | Longue ligne de plateformes friables. | ✔ |  |
 | 86 | Headwind | 5.33 | Wind | Jumps | Medium | 47s | Sauter contre le vent. | ✔ |  |
 | 87 | Drawbridge | 5.38 | Rotating structures | Timing | Medium | 47s | Ponts-levis qui montent et descendent. | ✔ |  |
@@ -131,7 +131,7 @@ Courbe dans chaque zone : X1 introduction · X2–X5 apprentissage · X6–X10 d
 | 89 | Tilt Maze | 5.48 | Tilting platforms | Kill bricks | Medium | 47s | Plateformes basculantes au-dessus de lave. | ✔ |  |
 | 90 | Storm Front | 5.53 | Gusts | Telegraphs | Medium | 47s | Rafales périodiques annoncées par un sifflement et des feuilles. | ✔ |  |
 | 91 | Rising Lava | 5.59 | Chaser | Vertical | Medium | 47s | La lave monte : grimper sans paniquer. | ✔ |  |
-| 92 | Shifting Floor | 5.64 | Moving grid | Observation | Medium | 47s | Une grille de dalles se réorganise. | ✔ |  |
+| 92 | Shifting Floor | 5.64 | Sliding tiles | Observation | Medium | 47s | Des dalles glissent latéralement en vague. | ✔ |  |
 | 93 | Crusher Hall | 5.69 | Moving walls | Pistons | Medium | 47s | Murs et pistons dans le même couloir. | ✔ |  |
 | 94 | Falling Stair | 5.73 | Falling platforms | Ascent | Medium | 47s | Escalier friable. | ✔ |  |
 | 95 | Wind Tunnel | 5.77 | Wind | Moving platforms | Medium | 47s | Navettes dans un tunnel venteux. | ✔ |  |

@@ -9,6 +9,10 @@ local Levels = script.Parent:WaitForChild("Levels")
 local ZONE_MODULES = {
 	"Zone1",
 	"Zone2",
+	"Zone3",
+	"Zone4",
+	"Zone5",
+	"Zone6",
 }
 
 local registry: { [number]: (any) -> () } = {}

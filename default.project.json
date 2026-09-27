@@ -18,7 +18,7 @@
         "CharacterJumpPower": 50,
         "CharacterWalkSpeed": 16,
         "AutoJumpEnabled": false,
-        "EnableMouseLockOption": true,
+        "EnableMouseLockOption": false,
         "LoadCharacterAppearance": true
       },
       "StarterPlayerScripts": {

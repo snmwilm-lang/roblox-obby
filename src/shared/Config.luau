@@ -63,6 +63,20 @@ Config.Leaderboards = {
 	},
 }
 
+--[[
+	Robux developer products. Create them on the Creator Hub
+	(Creations → your experience → Monetization → Developer Products), set the
+	price there, then paste each product id below. 0 = not configured (the
+	button tells the player the product is unavailable).
+]]
+Config.Products = {
+	SkipLevel = { Id = 0, Price = 17 }, -- move to the next checkpoint
+	KillEveryone = { Id = 0, Price = 2500 }, -- everyone else back to their checkpoint
+	ResetEveryone = { Id = 0, Price = 150000 }, -- everyone else back to level 1
+}
+-- ResetEveryone resets the SAVED checkpoint of the victims; their best level,
+-- leaderboard entries and completions are kept.
+
 Config.World = {
 	-- World CFrame of level 1's start pad (top surface centre). Local +Z of every
 	-- level frame is "forward".

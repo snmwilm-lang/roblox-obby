@@ -177,7 +177,7 @@ Levels[10] = function(L)
 	L:Step(V(4.75, 0, 26), V(3.5, 1, 8), { name = "Ledge" })
 	L:Step(V(0, 0, 36), V(6, 1, 18))
 	L:Wall(V(0, 5, 46), V(8, 14, 2), { name = "WrapWall" })
-	L:Step(V(-5.25, 0, 46), V(3, 1, 4), { name = "Ledge" })
+	L:Step(V(-5.25, 0, 45), V(3, 1, 6), { name = "Ledge" })
 	L:Step(V(0, 0, 54), V(6, 1, 14))
 	L:Exit(V(0, 0, 71))
 end

@@ -25,7 +25,8 @@ local AXES = {
 }
 
 function Rotator.register(instance: Instance, record, runtime)
-	local base = if instance:IsA("Model") then instance:GetPivot() else (instance :: BasePart).CFrame
+	local pivot = instance:GetAttribute("Pivot")
+	local base = if typeof(pivot) == "CFrame" then pivot elseif instance:IsA("Model") then instance:GetPivot() else (instance :: BasePart).CFrame
 	local parts = {}
 	if instance:IsA("BasePart") then
 		table.insert(parts, { Part = instance, Offset = CFrame.identity, Carry = not instance:HasTag("Hazard") })

@@ -113,6 +113,35 @@ function CheckpointService.onGateTouched(player: Player, level: number)
 	-- Anything else is an attempt to skip ahead: ignored.
 end
 
+-- Paid skip: move straight to `level` (the next checkpoint). The level is not
+-- counted as reached for BestLevel, so skips never show on leaderboards.
+function CheckpointService.skipTo(player: Player, level: number)
+	local data = services.DataService.get(player)
+	if not data then
+		return
+	end
+	data.Checkpoint = level
+	player:SetAttribute("CurrentLevel", CheckpointRules.displayLevel(level))
+	CheckpointService.refresh(player)
+	services.RespawnService.sendToCheckpoint(player)
+	notify:FireClient(player, { Kind = "Announcement", Text = ("Skipped to level %d"):format(CheckpointRules.displayLevel(level)) })
+end
+
+-- Sent back to level 1 by another player's purchase.
+function CheckpointService.resetToStart(player: Player)
+	local data = services.DataService.get(player)
+	if not data then
+		return
+	end
+	if services.SpeedrunService.getRun(player) then
+		services.SpeedrunService.setEnabled(player, false)
+	end
+	data.Checkpoint = 1
+	player:SetAttribute("CurrentLevel", 1)
+	CheckpointService.refresh(player)
+	services.RespawnService.sendToCheckpoint(player)
+end
+
 -- Victory room: start again from level 1 (best level and completions are kept).
 function CheckpointService.restart(player: Player)
 	local data = services.DataService.get(player)

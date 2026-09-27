@@ -61,6 +61,7 @@ function LevelBuilder.new(params: { level: number, origin: CFrame, parent: Insta
 	self.Origin = params.origin
 	self.Plan = LevelPlan.get(params.level)
 	self.Route = {} :: { RouteNode }
+	self.Ceilings = {} :: { { Center: Vector3, Size: Vector3 } }
 	self.ExitCFrame = nil :: CFrame?
 	self._seed = params.level * 7919
 
@@ -384,7 +385,12 @@ function LevelBuilder:Spinner(center: Vector3, opts: { [string]: any }?): Model
 	end
 
 	model.PrimaryPart = hub
-	model.WorldPivot = self:ToWorld(center)
+	-- The rotation pivot is stored explicitly: WorldPivot is not saved in a
+	-- place file, and the hub's own CFrame is tilted (upright cylinder), so
+	-- falling back to it would spin the arms around the wrong axis.
+	local pivot = self:ToWorld(center)
+	hub.PivotOffset = hub.CFrame:ToObjectSpace(pivot)
+	model:SetAttribute("Pivot", pivot)
 	ObstacleTypes.apply(model, "Rotator", {
 		Axis = "Y",
 		Speed = o.speed or 45,
@@ -474,7 +480,8 @@ function LevelBuilder:JumpPad(pos: Vector3, size: Vector3, power: number, opts: 
 		Boost = self.Origin:VectorToWorldSpace(o.boost or Vector3.zero),
 	})
 	if o.route ~= false then
-		self:_route("Static", pos, size, nil, part)
+		self:_route("JumpPad", pos, size, nil, part)
+		self.Route[#self.Route].Power = power
 	end
 	return part
 end
@@ -500,10 +507,10 @@ function LevelBuilder:GravityZone(pos: Vector3, size: Vector3, multiplier: numbe
 	return part
 end
 
--- Truss. pos = centre.
+-- Truss / ladder. pos = centre. opts.route = true records it on the validated route.
 function LevelBuilder:Truss(pos: Vector3, height: number, opts: { [string]: any }?): BasePart
 	local o = opts or {}
-	return self:_part({
+	local part = self:_part({
 		ClassName = "TrussPart",
 		Name = "Truss",
 		Size = Vector3.new(2, height, 2),
@@ -511,6 +518,263 @@ function LevelBuilder:Truss(pos: Vector3, height: number, opts: { [string]: any 
 		Color = o.color or self.Zone.Structure.Color,
 		Material = Enum.Material.Metal,
 	})
+	if o.route then
+		table.insert(self.Route, {
+			Kind = "Truss",
+			Top = pos + Vector3.new(0, height / 2, 0),
+			Bottom = pos.Y - height / 2,
+			Size = Vector3.new(2, height, 2),
+			Part = part,
+		})
+	end
+	return part
+end
+
+--[[
+	Timed door: a yellow wall that slides by `travel` (usually up) on a cycle.
+	Closed at alpha 0, open at alpha 1. pos = centre of the closed door.
+	opts: period, pause (time held open / closed), phase
+]]
+function LevelBuilder:Door(pos: Vector3, size: Vector3, travel: Vector3, opts: { [string]: any }?): BasePart
+	local o = opts or {}
+	local part = self:_shaped(pos, size, {
+		name = "TimedDoor",
+		color = Palette.Moving.Color,
+		material = Enum.Material.DiamondPlate,
+	})
+	part.CanTouch = false
+	ObstacleTypes.apply(part, "MovingPlatform", {
+		Travel = self.Origin:VectorToWorldSpace(travel),
+		Period = o.period or 4,
+		Pause = o.pause or 1,
+		Phase = o.phase or 0,
+		Easing = "Sine",
+		LoopType = "PingPong",
+	})
+	return part
+end
+
+-- Laser sheet with an on/off cycle (lethal only while on). pos = centre.
+function LevelBuilder:Laser(pos: Vector3, size: Vector3, opts: { [string]: any }?): BasePart
+	local o = opts or {}
+	local part = self:_shaped(pos, size, {
+		name = "Laser",
+		rot = o.rot,
+		color = Palette.Hazard.Color,
+		material = Palette.Hazard.Material,
+		transparency = 0.3,
+	})
+	part.CanCollide = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part:AddTag("Hazard")
+	ObstacleTypes.apply(part, "Laser", {
+		OnTime = o.on or 1.5,
+		OffTime = o.off or 2,
+		WarnTime = o.warn or 0.6,
+		Phase = o.phase or 0,
+	})
+	return part
+end
+
+--[[
+	Swing: a part (or arm + blade) oscillating around a pivot.
+	  - pendulum hazard: L:Pendulum(pivot, length, opts)
+	  - seesaw platform: L:Seesaw(pos, size, opts)
+	angle(t) = Offset + Amplitude * sin(2π t / Period)
+]]
+function LevelBuilder:_swing(instance: Instance, pivot: CFrame, o: { [string]: any })
+	instance:SetAttribute("Pivot", pivot)
+	ObstacleTypes.apply(instance, "Swing", {
+		Axis = o.axis or "Z",
+		Amplitude = o.amplitude or 50,
+		Offset = o.offset or 0,
+		Period = o.period or 3,
+		Phase = o.phase or 0,
+	})
+end
+
+-- Swinging axe. pivot = hinge (centre), the blade hangs `length` below it.
+function LevelBuilder:Pendulum(pivot: Vector3, length: number, opts: { [string]: any }?)
+	local o = opts or {}
+	local model = Instance.new("Model")
+	model.Name = "Pendulum"
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+	model.Parent = self.Model
+	local rod = self:_part({
+		Name = "Rod",
+		Size = Vector3.new(0.5, length, 0.5),
+		CFrame = self:ToWorld(pivot - Vector3.new(0, length / 2, 0)),
+		Color = self.Zone.Structure.Color,
+		Material = Enum.Material.Metal,
+		CanTouch = false,
+		CanCollide = false,
+	}, model)
+	local bladeSize = o.blade or Vector3.new(3, 3, 1)
+	local blade = self:_part({
+		Name = "Blade",
+		Size = bladeSize,
+		CFrame = self:ToWorld(pivot - Vector3.new(0, length, 0)),
+		Color = Palette.Hazard.Color,
+		Material = Palette.Hazard.Material,
+		CanTouch = false,
+	}, model)
+	blade:AddTag("Hazard")
+	model.PrimaryPart = rod
+	local pivotCF = self:ToWorld(pivot)
+	rod.PivotOffset = rod.CFrame:ToObjectSpace(pivotCF)
+	self:_swing(model, pivotCF, o)
+	-- hinge beam (decor)
+	self:Decor(pivot + Vector3.new(0, 0.6, 0), Vector3.new(o.beamWidth or 10, 1, 1), { name = "Hinge", material = Enum.Material.Metal })
+	return model
+end
+
+-- Tilting platform around its own centre. pos = top-centre (at rest).
+function LevelBuilder:Seesaw(pos: Vector3, size: Vector3, opts: { [string]: any }?): BasePart
+	local o = opts or {}
+	local part = self:_shaped(pos - Vector3.new(0, size.Y / 2, 0), size, {
+		name = "Seesaw",
+		color = Palette.Moving.Color,
+		material = Palette.Moving.Material,
+	})
+	part.CanTouch = false
+	self:_swing(part, part.CFrame, { axis = o.axis or "X", amplitude = o.amplitude or 12, period = o.period or 4, phase = o.phase or 0 })
+	if o.route ~= false then
+		self:_route("Static", pos, size, nil, part)
+	end
+	return part
+end
+
+--[[
+	Drawbridge: a plank hinged at its near edge (start = top-centre of that
+	edge). It lies flat, rises to vertical and comes back down:
+	angle = -45 - 45 * cos(...) style swing between 0° (flat) and -90° (up).
+	opts: period, phase, material, color (default: yellow = moving)
+]]
+function LevelBuilder:Drawbridge(start: Vector3, size: Vector3, opts: { [string]: any }?): BasePart
+	local o = opts or {}
+	local center = start + Vector3.new(0, -size.Y / 2, size.Z / 2)
+	local part = self:_shaped(center, size, {
+		name = o.name or "Drawbridge",
+		color = o.color or Palette.Moving.Color,
+		material = o.material or Palette.Moving.Material,
+	})
+	part.CanTouch = false
+	local hinge = self:ToWorld(start - Vector3.new(0, size.Y / 2, 0))
+	self:_swing(part, hinge, { axis = "X", amplitude = 45, offset = -45, period = o.period or 6, phase = o.phase or 0 })
+	if o.route ~= false then
+		self:_route("Drawbridge", start + Vector3.new(0, 0, size.Z / 2), size, nil, part)
+	end
+	return part
+end
+
+--[[
+	Rotor: a cross of planks rotating around a vertical axis, that you ride
+	(the carry turns you with it). center = top-centre of the planks.
+]]
+function LevelBuilder:Rotor(center: Vector3, opts: { [string]: any }?): Model
+	local o = opts or {}
+	local length = o.length or 12
+	local width = o.width or 3
+	local model = Instance.new("Model")
+	model.Name = "Rotor"
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
+	model.Parent = self.Model
+	local first
+	for i = 1, (o.planks or 2) do
+		local plank = self:_part({
+			Name = "Plank",
+			Size = Vector3.new(length, 1, width),
+			CFrame = self:ToWorld(center - Vector3.new(0, 0.5, 0), Vector3.new(0, (i - 1) * 180 / (o.planks or 2), 0)),
+			Color = Palette.Moving.Color,
+			Material = Palette.Moving.Material,
+			CanTouch = false,
+		}, model)
+		first = first or plank
+	end
+	model.PrimaryPart = first
+	local pivot = self:ToWorld(center)
+	first.PivotOffset = first.CFrame:ToObjectSpace(pivot)
+	model:SetAttribute("Pivot", pivot)
+	ObstacleTypes.apply(model, "Rotator", { Axis = "Y", Speed = o.speed or 30, Phase = o.phase or 0 })
+	if o.route ~= false then
+		table.insert(self.Route, { Kind = "Rotor", Top = center, Size = Vector3.new(length, 1, length) })
+	end
+	return model
+end
+
+-- Boost strip: raises the local WalkSpeed for a few seconds. pos = top-centre.
+function LevelBuilder:Boost(pos: Vector3, size: Vector3, speed: number, opts: { [string]: any }?): BasePart
+	local o = opts or {}
+	local part = self:_shaped(pos - Vector3.new(0, size.Y / 2, 0), size, {
+		name = "Boost",
+		rot = o.rot,
+		color = Palette.Boost.Color,
+		material = Palette.Boost.Material,
+	})
+	part.CanTouch = false
+	ObstacleTypes.apply(part, "Boost", { WalkSpeed = speed, Duration = o.duration or 2 })
+	if o.route ~= false then
+		self:_route("Boost", pos, size, o.rot, part)
+		self.Route[#self.Route].Speed = speed
+	end
+	return part
+end
+
+-- Wind volume pushing the local player. pos = centre, velocity = level-local studs/s.
+function LevelBuilder:Wind(pos: Vector3, size: Vector3, velocity: Vector3, opts: { [string]: any }?): BasePart
+	local o = opts or {}
+	local part = self:_part({
+		Name = "WindZone",
+		Size = size,
+		CFrame = self:ToWorld(pos),
+		Transparency = 1,
+		CanCollide = false,
+		CanTouch = false,
+		CanQuery = false,
+	})
+	ObstacleTypes.apply(part, "WindZone", {
+		Velocity = self.Origin:VectorToWorldSpace(velocity),
+		OnTime = o.on or 0,
+		OffTime = o.off or 0,
+		WarnTime = o.warn or 0.8,
+		Phase = o.phase or 0,
+	})
+	return part
+end
+
+--[[
+	Chaser: a kill volume that advances by `travel` at `speed` studs/s, starting
+	`delay` seconds after the local player enters the level (or respawns in it).
+	pos = centre of its start position.
+]]
+function LevelBuilder:Chaser(pos: Vector3, size: Vector3, travel: Vector3, speed: number, opts: { [string]: any }?): BasePart
+	local o = opts or {}
+	local part = self:_shaped(pos, size, {
+		name = "Chaser",
+		color = Palette.Hazard.Color,
+		material = Enum.Material.CrackedLava,
+		transparency = o.transparency or 0.1,
+	})
+	part.CanCollide = false
+	part.CanTouch = false
+	part:AddTag("Hazard")
+	ObstacleTypes.apply(part, "Chaser", {
+		Travel = self.Origin:VectorToWorldSpace(travel),
+		Speed = speed,
+		Delay = o.delay or 2,
+		Level = self.Level,
+		StartRadius = o.startRadius or 0,
+	})
+	return part
+end
+
+-- Low ceiling (head hitter). pos = centre. The validator caps jumps under it.
+function LevelBuilder:Ceiling(pos: Vector3, size: Vector3, opts: { [string]: any }?): BasePart
+	local o = opts or {}
+	local part = self:Wall(pos, size, { name = "Ceiling", color = o.color, material = o.material })
+	table.insert(self.Ceilings, { Center = pos, Size = size })
+	return part
 end
 
 -- Solid force-field barrier (end of available content).
@@ -728,6 +992,7 @@ function LevelBuilder:Finish()
 		Exit = self.ExitCFrame,
 		ExitLocal = self.ExitLocal,
 		Route = self.Route,
+		Ceilings = self.Ceilings,
 		VoidY = voidY,
 		FinishGate = self.FinishGate,
 		FinishSpawn = self.FinishSpawn,

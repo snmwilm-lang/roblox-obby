@@ -131,7 +131,75 @@ Themes[2] = {
 	end,
 }
 
--- Zones 3-10 fall back to a neutral treatment until they are built.
+-- Zone 3: canyon mesas, cacti
+Themes[3] = {
+	decorateStart = function(L, padSize: Vector3)
+		L:Decor(Vector3.new(0, -padSize.Y - 6, 0), Vector3.new(padSize.X * 0.9, 12, padSize.Z * 0.9), {
+			name = "Mesa",
+			color = rgb(186, 110, 72),
+			material = Enum.Material.Sandstone,
+		})
+		local side = if L.Level % 2 == 0 then 1 else -1
+		local base = Vector3.new(side * (padSize.X / 2 - 1.5), 0, -padSize.Z / 2 + 1.5)
+		L:Decor(base + Vector3.new(0, 2, 0), Vector3.new(1, 4, 1), { name = "Cactus", shape = "Cylinder", color = rgb(90, 140, 70), material = Enum.Material.Grass })
+		L:Decor(base + Vector3.new(0.8, 2.5, 0), Vector3.new(1.2, 0.6, 0.6), { name = "CactusArm", color = rgb(90, 140, 70), material = Enum.Material.Grass })
+	end,
+	scenery = function(L, pos: Vector3, scale: number)
+		L:Decor(pos, Vector3.new(18, 40, 14) * scale, { name = "Butte", color = rgb(176, 98, 64), material = Enum.Material.Sandstone })
+		L:Decor(pos + Vector3.new(0, 21 * scale, 0), Vector3.new(20, 2, 16) * scale, { name = "ButteCap", color = rgb(200, 130, 86), material = Enum.Material.Sandstone })
+	end,
+}
+
+-- Zone 4: marble columns above the clouds
+Themes[4] = {
+	decorateStart = function(L, padSize: Vector3)
+		L:Decor(Vector3.new(0, -padSize.Y - 8, 0), Vector3.new(padSize.X * 0.5, 16, padSize.Z * 0.5), {
+			name = "Column",
+			shape = "Cylinder",
+			color = rgb(220, 226, 236),
+			material = Enum.Material.Marble,
+		})
+		L:Decor(Vector3.new(0, -padSize.Y - 18, 0), Vector3.new(padSize.X * 1.4, 4, padSize.Z * 1.4), {
+			name = "Cloud",
+			shape = "Ball",
+			color = rgb(255, 255, 255),
+			material = Enum.Material.SmoothPlastic,
+			transparency = 0.3,
+			shadow = false,
+		})
+	end,
+	scenery = function(L, pos: Vector3, scale: number)
+		for i = 0, 2 do
+			L:Decor(pos + Vector3.new(i * 7 * scale, i * 6 * scale, 0), Vector3.new(4, 30 + i * 8, 4) * scale, { name = "Spire", shape = "Cylinder", color = rgb(210, 218, 232), material = Enum.Material.Marble })
+		end
+	end,
+}
+
+-- Zone 5: broken columns and rubble under a storm
+Themes[5] = {
+	decorateStart = function(L, padSize: Vector3)
+		L:Decor(Vector3.new(0, -padSize.Y - 3, 0), Vector3.new(padSize.X * 0.8, 6, padSize.Z * 0.8), {
+			name = "RuinBase",
+			color = rgb(90, 104, 96),
+			material = Enum.Material.Cobblestone,
+		})
+		local side = if L.Level % 2 == 0 then 1 else -1
+		L:Decor(Vector3.new(side * (padSize.X / 2 - 1.5), 2.5, -padSize.Z / 2 + 1.5), Vector3.new(1.6, 5, 1.6), {
+			name = "BrokenColumn",
+			shape = "Cylinder",
+			color = rgb(150, 160, 150),
+			material = Enum.Material.Limestone,
+			rot = Vector3.new(0, 0, 8 * side),
+		})
+	end,
+	scenery = function(L, pos: Vector3, scale: number)
+		L:Decor(pos, Vector3.new(3, 24, 3) * scale, { name = "RuinPillar", color = rgb(140, 150, 140), material = Enum.Material.Limestone })
+		L:Decor(pos + Vector3.new(10 * scale, 0, 0), Vector3.new(3, 18, 3) * scale, { name = "RuinPillar", color = rgb(140, 150, 140), material = Enum.Material.Limestone })
+		L:Decor(pos + Vector3.new(5 * scale, 12 * scale, 0), Vector3.new(14, 2.5, 3.5) * scale, { name = "RuinLintel", color = rgb(130, 140, 130), material = Enum.Material.Limestone, rot = Vector3.new(0, 0, -12) })
+	end,
+}
+
+-- Zones 6-10 fall back to a neutral treatment until they are built.
 local neutral = {
 	decorateStart = function(L, padSize: Vector3)
 		L:Decor(Vector3.new(0, -padSize.Y - 3, 0), Vector3.new(padSize.X * 0.7, 6, padSize.Z * 0.7), {
@@ -139,6 +207,9 @@ local neutral = {
 			color = L.Zone.Structure.Color,
 			material = L.Zone.Structure.Material,
 		})
+	end,
+	scenery = function(L, pos: Vector3, scale: number)
+		L:Decor(pos, Vector3.new(16, 30, 16) * scale, { name = "Monolith", color = L.Zone.Structure.Color, material = L.Zone.Structure.Material })
 	end,
 }
 

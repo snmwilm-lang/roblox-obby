@@ -72,6 +72,39 @@ ObstacleTypes.Schemas = {
 		Boost = Vector3.new(0, 0, 0), -- extra world-space velocity
 	},
 
+	-- Oscillating rotation around a pivot (pendulums, seesaws, drawbridges)
+	Swing = {
+		Axis = "Z", -- "X" | "Y" | "Z" (pivot-local)
+		Amplitude = 50, -- degrees
+		Offset = 0, -- degrees added to the oscillation (drawbridge: 45 +/- 45)
+		Period = 3,
+		Phase = 0, -- 0..1 delay
+	},
+
+	-- Temporarily raises the local player's WalkSpeed (momentum gates)
+	Boost = {
+		WalkSpeed = 30,
+		Duration = 2,
+	},
+
+	-- Volume that pushes the local player (constant or in gusts)
+	WindZone = {
+		Velocity = Vector3.new(8, 0, 0), -- world space, studs/s
+		OnTime = 0, -- 0 = constant wind
+		OffTime = 0,
+		WarnTime = 0.8, -- particles speed up / whistle before a gust
+		Phase = 0,
+	},
+
+	-- Kill volume advancing behind the local player once he enters its level
+	Chaser = {
+		Travel = Vector3.new(0, 0, 100),
+		Speed = 8, -- studs/s (walking is 16)
+		Delay = 2,
+		Level = 0,
+		StartRadius = 0, -- > 0: waits until the player is this close to its start
+	},
+
 	-- Volume that scales gravity for the local player only
 	GravityZone = {
 		GravityMultiplier = 0.5, -- 0.5x, 1.5x, 2x...

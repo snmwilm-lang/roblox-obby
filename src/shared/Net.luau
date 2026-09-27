@@ -18,6 +18,7 @@ local EVENTS = {
 	"SpeedrunRequest", -- client -> server (enable: boolean)
 	"RestartRequest", -- client -> server (from the victory room)
 	"SaveSetting", -- client -> server (key: string, value: any)
+	"PurchaseRequest", -- client -> server (productKey: string)
 }
 
 local Net = {}

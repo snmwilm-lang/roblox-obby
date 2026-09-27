@@ -282,7 +282,7 @@ local function buildSideButtons()
 		Name = "Side",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 10, 0.45, 0),
-		Size = UDim2.fromOffset(104, 4 * 52),
+		Size = UDim2.fromOffset(104, 6 * 52),
 		BackgroundTransparency = 1,
 		Parent = gui,
 	}, {
@@ -290,6 +290,16 @@ local function buildSideButtons()
 	})
 	sideButton("Respawn", "RESPAWN", 1, function()
 		controllers.RespawnController.die("Reset")
+	end)
+	sideButton("Shop", "SHOP", 6, function()
+		refs.Shop.Visible = not refs.Shop.Visible
+	end)
+	refs.ShiftLockButton = sideButton("ShiftLock", "SHIFT LOCK", 5, function()
+		controllers.ShiftLockController.toggle()
+	end)
+	controllers.ShiftLockController.Changed:Connect(function(on)
+		refs.ShiftLockButton.Text = if on then "SHIFT LOCK ✓" else "SHIFT LOCK"
+		refs.ShiftLockButton.BackgroundColor3 = if on then Color3.fromRGB(40, 110, 70) else DARK
 	end)
 	refs.SpeedrunButton = sideButton("Speedrun", "SPEEDRUN", 2, function()
 		local active = player:GetAttribute("SpeedrunActive") == true
@@ -304,6 +314,46 @@ local function buildSideButtons()
 	refs.PlayersButton = sideButton("Players", "PLAYERS ON", 4, function()
 		controllers.SettingsController.set("HideOthers", not controllers.SettingsController.get("HideOthers"))
 	end)
+end
+
+local function buildShop()
+	local panel = create("Frame", {
+		Name = "Shop",
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.new(0, 124, 0.45, 0),
+		Size = UDim2.fromOffset(260, 3 * 56 + 16),
+		BackgroundColor3 = DARK,
+		BackgroundTransparency = 0.2,
+		Visible = false,
+		Parent = gui,
+	}, {
+		corner(12),
+		create("UIPadding", { PaddingTop = UDim.new(0, 8), PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }),
+		create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }),
+	})
+	refs.Shop = panel
+	local items = {
+		{ "SkipLevel", "SKIP LEVEL", Color3.fromRGB(60, 150, 90) },
+		{ "KillEveryone", "KILL EVERYONE", Color3.fromRGB(190, 50, 50) },
+		{ "ResetEveryone", "EVERYONE TO LEVEL 1", Color3.fromRGB(120, 40, 160) },
+	}
+	for i, item in items do
+		local product = Config.Products[item[1]]
+		local button = create("TextButton", {
+			LayoutOrder = i,
+			Size = UDim2.new(1, 0, 0, 48),
+			BackgroundColor3 = item[3],
+			Font = Enum.Font.GothamBold,
+			TextColor3 = WHITE,
+			TextSize = 15,
+			Text = ("%s   ·   %d R$"):format(item[2], product.Price),
+			Parent = panel,
+		}, { corner(10) })
+		button.Activated:Connect(function()
+			controllers.AudioController.play("Click")
+			Net.event("PurchaseRequest"):FireServer(item[1])
+		end)
+	end
 end
 
 local function buildVictory()
@@ -487,6 +537,8 @@ local function onNotify(message)
 		UIController.toast(text, if message.Record then "NEW PERSONAL BEST" else ("best " .. formatTime(message.Best)), Color3.fromRGB(140, 230, 255), 3)
 	elseif kind == "RunFinished" then
 		refs.VictoryInfo.Text = ("Full run: %s%s"):format(formatTime(message.Time), if message.Record then "  (NEW BEST)" else "")
+	elseif kind == "Announcement" then
+		UIController.toast(string.upper(message.Text), nil, Color3.fromRGB(255, 210, 120), 3)
 	elseif kind == "Victory" then
 		controllers.AudioController.play("Victory")
 		refs.VictoryInfo.Text = ("Completions: %d"):format(message.Completions)
@@ -549,6 +601,7 @@ function UIController.start()
 	buildTopPanel()
 	buildOverlays()
 	buildSideButtons()
+	buildShop()
 	buildVictory()
 
 	player:GetAttributeChangedSignal("CurrentLevel"):Connect(refreshLevel)

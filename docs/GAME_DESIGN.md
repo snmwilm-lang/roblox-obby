@@ -174,11 +174,21 @@ Minimaliste (`UIController`) :
 * Checkpoints et progression : autoritaires côté serveur, anti-skip.
 * Option « masquer les autres joueurs » pour la lisibilité dans un serveur plein.
 
-## 10. Monétisation (règles)
+## 10. Monétisation
 
-Autorisé : trails, auras, death effects, victory effects, emotes, couleurs de nom, animations cosmétiques, serveurs privés.
+Décision du propriétaire du jeu (révise la règle initiale « skill only ») — boutique Robux, bouton SHOP :
 
-Interdit, sans exception : skip de niveau, invincibilité, double saut, vitesse ou saut modifiés, checkpoints supplémentaires, réduction de difficulté. Les valeurs `Config.Character` ne sont jamais modifiées par du code de gameplay, et les classements ne contiennent que des statistiques de jeu.
+| Produit | Prix | Effet |
+|---|---|---|
+| Skip level | 17 R$ | passe au checkpoint suivant (19 → 21 saute aussi le Final Stage) ; indisponible pendant un speedrun |
+| Kill everyone | 2 500 R$ | chaque autre joueur du serveur meurt (retour à son checkpoint) ; annonce à tout le serveur |
+| Everyone to level 1 | 150 000 R$ | chaque autre joueur du serveur repart du niveau 1 (checkpoint sauvegardé remis à 1) ; annonce |
+
+Garde-fous conservés :
+* le **meilleur niveau**, les classements et les complétions ne sont jamais retirés à une victime ;
+* reçus traités une seule fois (`ProcessReceipt` idempotent, mémorisé dans le profil) ;
+* les valeurs de mouvement (`Config.Character`) ne sont jamais modifiées par un achat ;
+* cosmétiques (trails, auras, effets de mort/victoire, emotes, couleurs de nom) toujours possibles en plus.
 
 ## 11. Mobile / manette
 
@@ -202,9 +212,10 @@ Interdit, sans exception : skip de niveau, invincibilité, double saut, vitesse 
 | 1 Design | ce document, [MECHANICS](MECHANICS.md), [LEVEL_PLAN](LEVEL_PLAN.md), [ARCHITECTURE](ARCHITECTURE.md) | ✔ |
 | 2 Systems | données, checkpoints, respawn, UI, zones, audio, leaderboards, speedrun | ✔ |
 | 3 Prototype | composants : MovingPlatform, Rotator, GhostPlatform, FallingPlatform, Laser, Conveyor, JumpPad, GravityZone | ✔ (Laser/Conveyor/JumpPad/Gravity/Falling prêts, utilisés à partir des zones 2-7) |
-| 4 V1 | niveaux 1–20 complets + transition zone 2 (niveau 21 jouable, checkpoint 22) | ✔ |
+| 4 V1 | niveaux 1–20 complets + transition zone 2 | ✔ |
+| 6a Expansion | zones 2–5 : niveaux 21–100 + checkpoint 101 ; composants Swing (pendules, bascules, ponts-levis), Boost, WindZone, Chaser ; shift lock ; boutique | ✔ |
 | 5 Test | tests automatiques (`lune run tests/run.luau`) + checklist de playtest [TESTING](TESTING.md) | automatique ✔ / playtest Studio à faire |
-| 6 Expansion | zones 2 → 10, une zone par itération, nouveaux composants au besoin (Door, Chaser, Wind, Surface, RotationRoom, Proximity) | à venir |
+| 6b Expansion | zones 6 → 10 (niveaux 101–200), composants Surface (glace/goudron), RotationRoom, ProximityTrap | à venir |
 | 7 Polish | musiques, VFX, ids audio Creator Store, cosmétiques, badges | à venir |
 
 Composants à créer pour l'expansion (même modèle : tag + attributs, animé par `ObstacleRuntime`) : `WindZone`, `Surface` (glace/goudron/boost), `Chaser`, `RotationRoom`, `ProximityTrap`, `TemporaryPlatform`, `MemoryPath`. Les portes temporisées et pendules sont déjà couverts par `MovingPlatform` et `Rotator` (axe X/Z).

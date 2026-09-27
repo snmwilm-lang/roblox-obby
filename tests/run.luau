@@ -172,15 +172,28 @@ local J = Config.Jump
 local C = Config.Character
 
 -- Horizontal reach for a jump that lands dh studs higher (negative = lower).
-local function maxGap(dh: number): number
-	local v = C.JumpPower
+--[[
+	Jump model. Horizontal reach of a jump that lands dh studs higher:
+	  reach = speed * airTime + EdgeAllowance
+	- vertical launch speed: JumpPower, or the pad's Power from a jump pad
+	- horizontal speed: WalkSpeed, or the boosted speed from a boost strip
+	- a ceiling above the take-off caps the rise (head hitters)
+]]
+local HEAD = 5.4 -- height of the character above its feet
+
+local function airTime(dh: number, v: number, cap: number?): number?
 	local g = C.Gravity
-	local disc = v * v - 2 * g * dh
-	if disc < 0 then
-		return -1
+	local peak = v * v / (2 * g)
+	if cap and cap < peak then
+		if dh > cap - 0.2 then
+			return nil
+		end
+		return math.sqrt(2 * cap / g) + math.sqrt(2 * (cap - dh) / g)
 	end
-	local t = (v + math.sqrt(disc)) / g
-	return C.WalkSpeed * t + J.EdgeAllowance
+	if dh > peak - 0.4 then
+		return nil
+	end
+	return (v + math.sqrt(v * v - 2 * g * dh)) / g
 end
 
 -- Edge-to-edge distance of two footprints (XZ rectangles)
@@ -190,25 +203,93 @@ local function gap(aTop: Vector3, aSize: Vector3, bTop: Vector3, bSize: Vector3)
 	return math.sqrt(dx * dx + dz * dz)
 end
 
+local function circlePosition(node, t: number): Vector3
+	local c = ObstacleTypes.read(node.Part, "MovingPlatform")
+	local a = Timing.loop(t, c.Period, c.Phase) * math.pi * 2
+	local travel = node.Travel
+	local radius = travel.Magnitude / 2
+	local u = travel.Unit
+	local v = u:Cross(Vector3.new(0, 1, 0))
+	if v.Magnitude < 1e-3 then
+		v = Vector3.new(1, 0, 0)
+	end
+	v = v.Unit
+	return node.Top + travel / 2 - u * radius * math.cos(a) + v * radius * math.sin(a)
+end
+
+local function isCircle(node): boolean
+	return node.Kind == "Mover" and node.Part ~= nil and node.Part:GetAttribute("LoopType") == "Circle"
+end
+
 local function positionsOf(node): { Vector3 }
-	if node.Kind == "Mover" and node.Travel then
+	if isCircle(node) then
+		local c = ObstacleTypes.read(node.Part, "MovingPlatform")
+		local list = {}
+		for i = 0, 7 do
+			table.insert(list, circlePosition(node, c.Period * i / 8))
+		end
+		return list
+	elseif node.Kind == "Mover" and node.Travel then
 		return { node.Top, node.Top + node.Travel }
 	end
 	return { node.Top }
 end
 
--- Per-zone budget: fraction of the maximum jump a normal level may ask for.
-local BUDGET = { [1] = 0.62, [2] = 0.7 }
+-- lowest ceiling clearance above a jump (0 if none)
+local function ceilingCap(ceilings, pa: Vector3, a, pb: Vector3, b): number?
+	local minX = math.min(pa.X - a.Size.X / 2, pb.X - b.Size.X / 2)
+	local maxX = math.max(pa.X + a.Size.X / 2, pb.X + b.Size.X / 2)
+	local minZ = math.min(pa.Z - a.Size.Z / 2, pb.Z - b.Size.Z / 2)
+	local maxZ = math.max(pa.Z + a.Size.Z / 2, pb.Z + b.Size.Z / 2)
+	local cap = nil
+	for _, ceiling in ceilings or {} do
+		local c, size = ceiling.Center, ceiling.Size
+		local bottom = c.Y - size.Y / 2
+		local overlaps = c.X + size.X / 2 > minX and c.X - size.X / 2 < maxX and c.Z + size.Z / 2 > minZ and c.Z - size.Z / 2 < maxZ
+		if overlaps and bottom > pa.Y then
+			local clearance = bottom - pa.Y - HEAD
+			cap = if cap then math.min(cap, clearance) else clearance
+		end
+	end
+	return cap
+end
 
-local function jumpRatio(a, b): (number, number, number)
+-- Ratio (needed gap / possible reach) of one jump; 0 = a step, huge = impossible.
+-- Also returns the air time (s).
+local function jumpBetween(a, pa: Vector3, b, pb: Vector3, ceilings): (number, number, number, number)
+	local origin = pa
+	local target = pb
+	local dh = target.Y - origin.Y
+	if b.Kind == "Truss" then
+		-- grabbing anywhere between its bottom and top is enough
+		dh = math.max(b.Bottom - origin.Y, math.min(0, b.Top.Y - origin.Y))
+	end
+	local d = gap(origin, a.Size, target, b.Size)
+	if d <= 0 and dh <= 0.6 then
+		return 0, d, dh, 0.1
+	end
+	local v = if a.Kind == "JumpPad" then a.Power else C.JumpPower
+	local speed = if a.Kind == "Boost" then a.Speed else C.WalkSpeed
+	local cap = ceilingCap(ceilings, origin, a, target, b)
+	if cap and cap <= 0 then
+		cap = 0.01
+	end
+	local t = airTime(dh, v, cap)
+	if not t then
+		return math.huge, d, dh, 0.5
+	end
+	return d / (speed * t + J.EdgeAllowance), d, dh, t
+end
+
+-- Per-zone budget: fraction of the maximum jump a normal level may ask for.
+local BUDGET = { [1] = 0.62, [2] = 0.7, [3] = 0.75, [4] = 0.78, [5] = 0.8 }
+
+local function jumpRatio(a, b, ceilings): (number, number, number)
 	local best = math.huge
 	local bestGap, bestDh = 0, 0
 	for _, pa in positionsOf(a) do
 		for _, pb in positionsOf(b) do
-			local d = gap(pa, a.Size, pb, b.Size)
-			local dh = pb.Y - pa.Y
-			local reach = maxGap(dh)
-			local ratio = if d <= 0 and dh <= 0.6 then 0 elseif reach <= 0 or dh > J.MaxHeight - 0.4 then math.huge else d / reach
+			local ratio, d, dh = jumpBetween(a, pa, b, pb, ceilings)
 			if ratio < best then
 				best, bestGap, bestDh = ratio, d, dh
 			end
@@ -217,10 +298,12 @@ local function jumpRatio(a, b): (number, number, number)
 	return best, bestGap, bestDh
 end
 
--- Local-frame position of a moving/ghost node at time t
-local function nodeAt(node, t: number): (Vector3?, boolean)
+-- Local-frame position of a node at time t, and whether it can be stood on
+local function nodeAt(node, t: number): (Vector3, boolean)
 	local part = node.Part
-	if node.Kind == "Mover" then
+	if isCircle(node) then
+		return circlePosition(node, t), true
+	elseif node.Kind == "Mover" then
 		local c = ObstacleTypes.read(part, "MovingPlatform")
 		local alpha = Timing.pingPong(t, c.Period, c.Pause, c.Phase, c.Easing)
 		return node.Top + node.Travel * alpha, true
@@ -229,14 +312,24 @@ local function nodeAt(node, t: number): (Vector3?, boolean)
 		local on, left = Timing.onOff(t, c.VisibleDuration, c.InvisibleDuration, c.PhaseOffset)
 		-- a ghost about to vanish is not a safe landing
 		return node.Top, on and left > 0.25
+	elseif node.Kind == "Drawbridge" then
+		-- usable while within 15° of flat, and not about to rise (0.3 s margin)
+		local c = ObstacleTypes.read(part, "Swing")
+		local function angle(time)
+			return c.Offset + c.Amplitude * math.sin(Timing.loop(time, c.Period, c.Phase) * math.pi * 2)
+		end
+		return node.Top, angle(t) > -15 and angle(t + 0.3) > -15
 	end
 	return node.Top, true
 end
 
+local function isDynamic(node): boolean
+	return node.Kind == "Mover" or node.Kind == "Ghost" or node.Kind == "Drawbridge"
+end
+
 -- For dynamic pairs, measure how long per cycle the jump is actually possible.
-local function usableWindow(a, b, budget: number): number
-	local dynamic = a.Kind == "Mover" or a.Kind == "Ghost" or b.Kind == "Mover" or b.Kind == "Ghost"
-	if not dynamic then
+local function usableWindow(a, b, budget: number, ceilings): number
+	if not isDynamic(a) and not isDynamic(b) then
 		return math.huge
 	end
 	local horizon, step = 60, 0.02
@@ -245,13 +338,8 @@ local function usableWindow(a, b, budget: number): number
 	while t < horizon do
 		local pa, okA = nodeAt(a, t)
 		local pb, okB = nodeAt(b, t)
-		if okA and okB then
-			local d = gap(pa, a.Size, pb, b.Size)
-			local dh = pb.Y - pa.Y
-			local reach = maxGap(dh)
-			if (d <= 0 and dh <= 0.6) or (reach > 0 and dh <= J.MaxHeight - 0.4 and d / reach <= budget) then
-				total += step
-			end
+		if okA and okB and jumpBetween(a, pa, b, pb, ceilings) <= budget then
+			total += step
 		end
 		t += step
 	end
@@ -260,34 +348,37 @@ end
 
 --[[
 	Sequential feasibility: simulate a player walking the whole route over time.
-	reach[i][k] = the player can be standing on node i at time step k.
-	- he can stay on a node while it is solid (ghosts vanish, movers carry him)
-	- a jump from i to i+1 started at step k lands JUMP_STEPS later, and needs
-	  the jump to be within budget at take-off and node i+1 solid on landing
+	reach[k] = the player can be standing on the current node at time step k.
+	- he can stay on a node while it is solid (ghosts vanish, movers carry him,
+	  a falling platform only holds him FallDelay seconds)
+	- a jump started at step k lands after its real air time, and needs the
+	  target solid on landing
 	This catches rhythm bugs pairwise checks miss (each pair has a window, but
 	no timing lets you chain them).
 ]]
 local STEP = 0.05
-local JUMP_STEPS = 10 -- 0.5 s of air time
 local HORIZON = 90
 
-local function jumpPossible(a, b, t: number, budget: number): boolean
+local function jumpLanding(a, b, t: number, budget: number, ceilings): number?
 	local pa, okA = nodeAt(a, t)
-	local pb = nodeAt(b, t + JUMP_STEPS * STEP)
-	local _, okB = nodeAt(b, t + JUMP_STEPS * STEP)
-	if not okA or not okB then
-		return false
+	if not okA then
+		return nil
 	end
-	local d = gap(pa, a.Size, pb, b.Size)
-	local dh = pb.Y - pa.Y
-	if d <= 0 and dh <= 0.6 then
-		return true
+	-- estimate air time with the target's current position, then check landing
+	local pb0 = nodeAt(b, t)
+	local _, _, _, air = jumpBetween(a, pa, b, pb0, ceilings)
+	local landing = t + math.max(air, STEP)
+	local pb, okB = nodeAt(b, landing)
+	if not okB then
+		return nil
 	end
-	local reach = maxGap(dh)
-	return reach > 0 and dh <= J.MaxHeight - 0.4 and d / reach <= budget
+	if jumpBetween(a, pa, b, pb, ceilings) <= budget then
+		return landing
+	end
+	return nil
 end
 
-local function routeFeasible(route, budget: number): (boolean, number)
+local function routeFeasible(route, budget: number, ceilings): (boolean, number)
 	local steps = math.floor(HORIZON / STEP)
 	local current = table.create(steps, false)
 	for k = 1, steps // 2 do
@@ -296,18 +387,32 @@ local function routeFeasible(route, budget: number): (boolean, number)
 	for i = 1, #route - 1 do
 		local a, b = route[i], route[i + 1]
 		-- propagate "stay on a" forward in time
-		for k = 2, steps do
-			if not current[k] and current[k - 1] then
+		local holdSteps = math.huge
+		if a.Kind == "Falling" and a.Part then
+			holdSteps = math.floor((ObstacleTypes.read(a.Part, "FallingPlatform").FallDelay - 0.1) / STEP)
+		end
+		local landed = table.clone(current)
+		local lastLanding = -math.huge
+		for k = 1, steps do
+			if landed[k] then
+				lastLanding = k
+			elseif k > 1 and current[k - 1] and k - lastLanding <= holdSteps then
 				local _, solid = nodeAt(a, k * STEP)
 				current[k] = solid
 			end
 		end
 		local nextReach = table.create(steps, false)
 		local any = false
-		for k = 1, steps - JUMP_STEPS do
-			if current[k] and jumpPossible(a, b, k * STEP, budget) then
-				nextReach[k + JUMP_STEPS] = true
-				any = true
+		for k = 1, steps do
+			if current[k] then
+				local landing = jumpLanding(a, b, k * STEP, budget, ceilings)
+				if landing then
+					local index = math.floor(landing / STEP + 0.5)
+					if index <= steps then
+						nextReach[index] = true
+						any = true
+					end
+				end
 			end
 		end
 		if not any then
@@ -339,6 +444,108 @@ do
 	check(routeFeasible({ w4, w5, w6 }, 0.62), "simulator self-test: forward wave is feasible")
 end
 
+--[[
+	Path clearance: sweep the character's body (2 x 5 x 2 above its feet)
+	along the straight line between the closest points of two route nodes and
+	check it never goes through static solid geometry (walls, towers,
+	ceilings, other platforms). Catches wraparound walls placed too close,
+	spiral towers too wide, platforms blocking a jump...
+]]
+local DYNAMIC_TAGS = { "MovingPlatform", "Rotator", "Swing", "GhostPlatform", "FallingPlatform", "Hazard", "Chaser" }
+
+local function isDynamicPart(part): boolean
+	local node = part
+	while node and node:IsA("Instance") and not node:GetAttribute("Level") do
+		for _, tag in DYNAMIC_TAGS do
+			if node:HasTag(tag) then
+				return true
+			end
+		end
+		node = node.Parent
+	end
+	return false
+end
+
+local function solidBoxes(stage)
+	local boxes = {}
+	for _, part in stage.Model:GetDescendants() do
+		if part:IsA("BasePart") and part.CanCollide and not isDynamicPart(part) then
+			local cf = stage.Origin:ToObjectSpace(part.CFrame)
+			local size = part.Size
+			local r = cf -- rotation-aware AABB in level space
+			local ax = math.abs(r.XVector.X) * size.X + math.abs(r.YVector.X) * size.Y + math.abs(r.ZVector.X) * size.Z
+			local ay = math.abs(r.XVector.Y) * size.X + math.abs(r.YVector.Y) * size.Y + math.abs(r.ZVector.Y) * size.Z
+			local az = math.abs(r.XVector.Z) * size.X + math.abs(r.YVector.Z) * size.Y + math.abs(r.ZVector.Z) * size.Z
+			table.insert(boxes, { Part = part, Min = cf.Position - Vector3.new(ax, ay, az) / 2, Max = cf.Position + Vector3.new(ax, ay, az) / 2 })
+		end
+	end
+	return boxes
+end
+
+local function closestPoint(top: Vector3, size: Vector3, toward: Vector3): Vector3
+	return Vector3.new(
+		math.clamp(toward.X, top.X - size.X / 2, top.X + size.X / 2),
+		top.Y,
+		math.clamp(toward.Z, top.Z - size.Z / 2, top.Z + size.Z / 2)
+	)
+end
+
+local function sweepBlocked(a, b, pa: Vector3, pb: Vector3, arc: number, boxes): BasePart?
+	local steps = math.max(2, math.ceil((pb - pa).Magnitude / 0.25))
+	for i = 0, steps do
+		local t = i / steps
+		local feet = pa:Lerp(pb, t) + Vector3.new(0, 4 * arc * t * (1 - t), 0)
+		local minP = Vector3.new(feet.X - 0.9, feet.Y + 0.3, feet.Z - 0.9)
+		local maxP = Vector3.new(feet.X + 0.9, feet.Y + 5.1, feet.Z + 0.9)
+		for _, box in boxes do
+			if box.Part ~= a.Part and box.Part ~= b.Part
+				and minP.X < box.Max.X and maxP.X > box.Min.X
+				and minP.Y < box.Max.Y and maxP.Y > box.Min.Y
+				and minP.Z < box.Max.Z and maxP.Z > box.Min.Z then
+				return box.Part
+			end
+		end
+	end
+	return nil
+end
+
+-- Tries take-off/landing point pairs spread over both footprints; the jump is
+-- blocked only if every reasonable pair is blocked.
+local function pathBlocked(a, b, boxes, ceilings): BasePart?
+	if a.Kind == "Truss" or b.Kind == "Truss" or isDynamic(a) or isDynamic(b) or a.Kind == "Rotor" or b.Kind == "Rotor" then
+		return nil
+	end
+	local bestGap = gap(a.Top, a.Size, b.Top, b.Size)
+	local v = if a.Kind == "JumpPad" then a.Power else C.JumpPower
+	local peak = v * v / (2 * C.Gravity)
+	local firstBlocker = nil
+	for ix = -2, 2 do
+		for iz = -2, 2 do
+			local target = b.Top + Vector3.new(ix * b.Size.X / 4.5, 0, iz * b.Size.Z / 4.5)
+			local pa = closestPoint(a.Top, a.Size, target)
+			local pb = closestPoint(b.Top, b.Size, pa)
+			if gap(pa, Vector3.zero, pb, Vector3.zero) <= bestGap + 1.5 then
+				local dh = pb.Y - pa.Y
+				local walking = gap(pa, Vector3.zero, pb, Vector3.zero) < 0.05 and math.abs(dh) <= 0.6
+				local arc = 0
+				if not walking then
+					arc = math.max(0, peak - math.max(dh, 0)) * 0.8
+					local cap = ceilingCap(ceilings, pa, a, pb, b)
+					if cap then
+						arc = math.clamp(cap - math.max(dh, 0), 0, arc)
+					end
+				end
+				local blocker = sweepBlocked(a, b, pa, pb, arc, boxes)
+				if not blocker then
+					return nil
+				end
+				firstBlocker = firstBlocker or blocker
+			end
+		end
+	end
+	return firstBlocker
+end
+
 local lengths = {}
 for level = 1, highest do
 	local stage = stages[level]
@@ -356,14 +563,20 @@ for level = 1, highest do
 	local worst = 0
 	for i = 1, #route - 1 do
 		local a, b = route[i], route[i + 1]
-		local ratio, d, dh = jumpRatio(a, b)
+		local ratio, d, dh = jumpRatio(a, b, stage.Ceilings)
 		worst = math.max(worst, ratio)
 		check(ratio <= budget, ("level %d jump %d->%d too hard: gap %.2f rise %.2f ratio %.2f > %.2f"):format(level, i, i + 1, d, dh, ratio, budget))
-		local window = usableWindow(a, b, budget)
+		local window = usableWindow(a, b, budget, stage.Ceilings)
 		check(window >= 0.08, ("level %d jump %d->%d is only possible %.0f%% of the time"):format(level, i, i + 1, window * 100))
 	end
 
-	local feasible, stuckAt = routeFeasible(route, budget)
+	local boxes = solidBoxes(stage)
+	for i = 1, #route - 1 do
+		local blocker = pathBlocked(route[i], route[i + 1], boxes, stage.Ceilings)
+		check(blocker == nil, ("level %d jump %d->%d goes through %s"):format(level, i, i + 1, blocker and blocker:GetFullName() or ""))
+	end
+
+	local feasible, stuckAt = routeFeasible(route, budget, stage.Ceilings)
 	check(feasible, ("level %d: no timing lets a player chain the route (stuck after node %d)"):format(level, stuckAt))
 
 	-- level length along the route
@@ -393,6 +606,42 @@ for level = 1, highest do
 	local gate = stages[level].Gate
 	eq(gate:GetAttribute("Level"), level, "gate level " .. level)
 	eq(gate:GetAttribute("Checkpoint"), CheckpointRules.hasCheckpoint(level), "gate checkpoint flag " .. level)
+end
+
+-- Rotating / swinging obstacles must survive being saved into a place file:
+-- serialise the world, load it back, and check every pivot (the "sweeper
+-- spins the wrong way" bug came from a pivot lost at save time).
+do
+	local fs = require("@lune/fs")
+	local _ = fs
+	local copy = roblox.deserializeModel(roblox.serializeModel({ folder }))[1]
+	local count = 0
+	for _, d in copy:GetDescendants() do
+		if d:HasTag("Rotator") or d:HasTag("Swing") then
+			count += 1
+			local pivot = d:GetAttribute("Pivot")
+			check(typeof(pivot) == "CFrame", "pivot saved for " .. d:GetFullName())
+			if typeof(pivot) == "CFrame" and d:HasTag("Rotator") and d:GetAttribute("Axis") == "Y" then
+				check(pivot.UpVector.Y > 0.999, "spinner rotates around the vertical axis: " .. d:GetFullName())
+			end
+			if typeof(pivot) == "CFrame" and d.Name == "Spinner" then
+				-- the arms must sit at pivot height (they sweep a horizontal plane)
+				for _, arm in d:GetChildren() do
+					if arm.Name == "Arm" then
+						check(math.abs(arm.CFrame.Position.Y - pivot.Position.Y) < 1e-3, "arm at pivot height in " .. d:GetFullName())
+					end
+				end
+			end
+		end
+	end
+	check(count > 0, "rotating obstacles found after a save round-trip")
+end
+
+-- Chasers never outrun a walking player
+for _, d in folder:GetDescendants() do
+	if d:HasTag("Chaser") then
+		check((d:GetAttribute("Speed") or 0) <= C.WalkSpeed * 0.65, "chaser too fast: " .. d:GetFullName())
+	end
 end
 
 -- Limbo bars: walkable under (hitbox 5.6 tall from 0.2 below the feet), never jumpable under

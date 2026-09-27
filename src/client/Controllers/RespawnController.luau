@@ -149,7 +149,9 @@ function RespawnController.start()
 	end)
 
 	Net.event("Notify").OnClientEvent:Connect(function(message)
-		if message.Kind == "Teleported" then
+		if message.Kind == "ForcedDeath" then
+			RespawnController.die("Killed")
+		elseif message.Kind == "Teleported" then
 			controllers.ObstacleRuntime.resetLocal()
 			controllers.GravityController.reset()
 			invulnerableUntil = os.clock() + Config.Respawn.Invulnerable

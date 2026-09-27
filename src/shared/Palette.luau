@@ -24,6 +24,7 @@ local Palette = {
 	Falling = { Color = rgb(214, 120, 54), Material = Enum.Material.Slate },
 	FallingWarning = rgb(255, 80, 40),
 	JumpPad = { Color = rgb(140, 255, 60), Material = Enum.Material.Neon },
+	Boost = { Color = rgb(255, 140, 30), Material = Enum.Material.Neon },
 	Conveyor = { Color = rgb(52, 56, 64), Material = Enum.Material.DiamondPlate },
 	ConveyorArrow = rgb(255, 230, 120),
 	Ice = { Color = rgb(190, 230, 255), Material = Enum.Material.Glacier },

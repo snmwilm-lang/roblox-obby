@@ -30,7 +30,8 @@ local function collectParts(instance: Instance, base: CFrame, record, runtime)
 end
 
 function MovingPlatform.register(instance: Instance, record, runtime)
-	local base = if instance:IsA("Model") then instance:GetPivot() else (instance :: BasePart).CFrame
+	local pivot = instance:GetAttribute("Pivot")
+	local base = if typeof(pivot) == "CFrame" then pivot elseif instance:IsA("Model") then instance:GetPivot() else (instance :: BasePart).CFrame
 	local config = ObstacleTypes.read(instance, "MovingPlatform")
 	return {
 		Config = config,

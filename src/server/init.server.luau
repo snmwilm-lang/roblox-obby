@@ -19,6 +19,7 @@ local ORDER = {
 	"SpeedrunService",
 	"CheckpointService",
 	"RespawnService",
+	"MonetizationService",
 }
 
 Net.init()
@@ -38,6 +39,7 @@ local START_ORDER = {
 	"SpeedrunService",
 	"CheckpointService",
 	"RespawnService",
+	"MonetizationService",
 	"DataService",
 }
 for _, name in START_ORDER do

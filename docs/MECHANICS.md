@@ -99,7 +99,7 @@ Budget d'écart (fraction du saut maximum à la même hauteur, vérifié par `te
 ## 8. Plateformes séquentielles ◐ (GhostPlatform + phases)
 Plateformes qui apparaissent dans un ordre : fantômes avec `PhaseOffset` croissants (0, ⅓, ⅔). Même fiche que 7 ; la vague va toujours dans le sens de progression (vérifié par le simulateur).
 
-## 9. Portes temporisées ◐ (MovingPlatform verticale/latérale)
+## 9. Portes temporisées ✔ (`LevelBuilder:Door` → MovingPlatform)
 1. Porte qui s'ouvre/ferme sur un cycle. 2. `Travel` (ouverture), `Period`, `Pause` (= durée ouverte/fermée), `Phase`. 3. Fenêtres courtes, portes successives déphasées, porte + navette. 4. Chaser (zone 9). 5. Porte non mortelle (bloquante) par défaut ; une porte qui peut écraser doit être rouge. 6. Déterministe. 7. Fenêtre ≥ 1 s. 8. (expansion) voyant vert/rouge au-dessus de la porte, horloge visible. 9. signal sonore 0.5 s avant fermeture.
 
 ## 10. Lasers à cycle et laser sweep ✔ (`Laser`, + `Rotator`)
@@ -130,21 +130,21 @@ Plateformes qui apparaissent dans un ordre : fantômes avec `PhaseOffset` croiss
 ## 13. Jump pads ✔ (`JumpPad`)
 1. Vitesse verticale fixée à l'atterrissage (+ `Boost` optionnel). 2. `Power`, `Boost`. 3. Chaînes, pads inclinés, visée en l'air. 4. Gravité (hauteur ×1/g), rotation rooms. 5. Hauteur identique à chaque fois (vitesse imposée, pas d'impulsion additive). 6. Local. 7. Pas de contrôle aérien fin requis en zone 3. 8. Vert Neon + écrasement. 9. Whoosh.
 
-## 14. Pentes, boost, momentum gates ○
+## 14. Boost et momentum gates ✔ (`Boost`)
 1. **Momentum gate** : écart infranchissable à vitesse normale mais franchissable après une surface d'accélération visible juste avant. 2. Longueur du boost, WalkSpeed temporaire, durée. 3. Boost + virage, boost + laser. 4. Glace. 5. Le boost modifie la WalkSpeed locale temporairement de façon scriptée (pas via la physique) ; réinitialisé au respawn. 6. Local. 7. Pas de précision de trajectoire extrême. 8. Surface orange à flèches. 9. Son montant pendant le boost.
 
-## 15. Truss, échelles, head hitters, wall hops ○ (géométrie)
+## 15. Truss, échelles, head hitters, wraparounds de coin ✔ (géométrie, shift lock)
 * **Truss/échelles** (`LevelBuilder:Truss`) : montée native Roblox, fiable sur tous les supports.
 * **Head hitters** : plafond bas au-dessus d'un saut → saut raccourci ; hauteur de plafond calculée pour un seul timing.
 * **Wall hops** : limités à 3 niveaux de la zone 4, surfaces larges, zone de réessai proche ; jamais obligatoires en zones 9-10 sur mobile sans alternative.
 
-## 16. Vent ○ (`WindZone`)
+## 16. Vent ✔ (`WindZone`)
 1. Volume qui applique une force latérale constante au joueur local. 2. Direction, force, rafales périodiques (`OnTime/OffTime`). 3. Contre-vent, latéral, rafales. 4. Navettes, fantômes. 5. `VectorForce` local sur le HumanoidRootPart (pas de modification de la physique globale). 6. Local. 7. Force limitée pour rester contrôlable au joystick. 8. Particules/feuilles dans le sens du vent, intensité visible avant la rafale. 9. Sifflement qui monte avant une rafale.
 
-## 17. Blocs basculants, murs mobiles, structures mouvantes ◐/○
+## 17. Bascules, ponts-levis, pendules, presses ✔ (`Swing`, `MovingPlatform`)
 Basculants = `Rotator` à axe X/Z avec `Speed` alterné ou `MovingPlatform` (expansion : composant `Tilt` ping-pong d'angle). Murs mobiles = `MovingPlatform` lents non mortels qui réduisent l'espace (écrasement = rouge seulement). Déterministes, carry-compatibles.
 
-## 18. Chaser ○ (`Chaser`)
+## 18. Chaser ✔ (`Chaser`, option `StartRadius`)
 1. Mur/lave/vide qui avance derrière le joueur. 2. Vitesse (≤ 70 % de la vitesse de marche), délai de départ, trajectoire. 3. Pression, jamais la vitesse brute. 4. Chutes, portes. 5. **Local** : démarre quand le joueur local entre dans la section, réinitialisé au respawn. 6. Chacun a son chaser. 7. Vitesse tolérante. 8. Lave rouge (règle danger), lumière pulsante. 9. Grondement qui se rapproche.
 
 ## 19. Surfaces de contrôle ○ (`Surface` : glace, goudron, boost)
